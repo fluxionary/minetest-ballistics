@@ -1,0 +1,3 @@
+temporary textures:
+* test_tool is the stick from minetest_game
+* test is the steel arrow from x_bows
