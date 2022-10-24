@@ -83,6 +83,7 @@ end
 function api.emerge_target(self, dtime)
 	local obj = self.object
 	local pos = obj:get_pos()
+	dtime = 1.5 * dtime  -- TODO: use some heuristic based on the length of a server step to balance this
 	local destination = pos + (obj:get_velocity() + obj:get_acceleration() * dtime) * dtime
 
 	minetest.emerge_area(pos, destination)
