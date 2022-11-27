@@ -20,7 +20,7 @@ function api.player_shoots(name, player, speed, gravity, shoot_param)
 	local eye_height = v_new(0, player:get_properties().eye_height, 0)
 	local eye_offset = player:get_eye_offset() * 0.1
 	local yaw = player:get_look_horizontal()
-	local start = player:get_pos() + eye_height + v_rotate_around_axis(eye_offset, {x=0,y=1,z=0}, yaw)
+	local start = player:get_pos() + eye_height + v_rotate_around_axis(eye_offset, { x = 0, y = 1, z = 0 }, yaw)
 	api.shoot(
 		name,
 		start,
