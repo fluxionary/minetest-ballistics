@@ -1,5 +1,5 @@
 # ballistics
 
-shoot stuff
+api for projectiles
 
 doesn't work yet.

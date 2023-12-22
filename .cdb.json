@@ -1,5 +1,11 @@
 {
     "type": "MOD",
+    "name": "ballistics",
     "title": "ballistics",
-    "short_description": "shoot stuff"
+    "license": "LGPL-3.0-or-later",
+    "media_license": "CC-BY-SA-4.0",
+    "repo": "https://github.com/fluxionary/minetest-ballistics.git",
+    "website": "https://github.com/fluxionary/minetest-ballistics",
+    "issue_tracker": "https://github.com/fluxionary/minetest-ballistics/issues",
+    "short_description": "api for projectiles"
 }

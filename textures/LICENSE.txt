@@ -1,3 +1,4 @@
 temporary textures:
-* test_tool is the stick from minetest_game
-* test is the steel arrow from x_bows
+* ballistics_test_tool is the stick from minetest_game
+* ballistics_test is the steel arrow from x_bows
+* ballistics_arrow_mesh is from x_bows

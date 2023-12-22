@@ -1,0 +1,2 @@
+temporary models:
+* ballistics_arrow.b3d is from x_bows

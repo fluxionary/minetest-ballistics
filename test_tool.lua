@@ -1,20 +1,21 @@
 local f = string.format
 
-local api = ballistics.api
-
 minetest.register_craftitem("ballistics:test", {
 	wield_image = "ballistics_test.png",
 })
 
-api.register_missile("ballistics:test", {
+ballistics.register_missile("ballistics:test", {
 	is_arrow = true,
-	visual = "wielditem",
-	textures = { "ballistics:test" },
+	visual = "mesh",
+	mesh = "ballistics_arrow.b3d",
+	textures = { "ballistics_arrow_mesh.png" },
+	collisionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2 },
+	selectionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2, rotate = true },
 
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
 		minetest.chat_send_all(f("hit %s @ %s", node.name, minetest.pos_to_string(pos)))
 
-		api.freeze(self)
+		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)
 
 		minetest.after(5, function()
 			if self.object then
@@ -30,12 +31,12 @@ api.register_missile("ballistics:test", {
 		if minetest.is_player(object) then
 			name = object:get_player_name()
 		else
-			name = object:get_luaentity().name
+			name = (object:get_luaentity() or {}).name or "?"
 		end
 
 		minetest.chat_send_all(f("hit %s @ %s", name, minetest.pos_to_string(object:get_pos())))
 
-		api.freeze(self)
+		ballistics.on_hit_object_stick(self, object, axis, old_velocity, new_velocity)
 
 		minetest.after(5, function()
 			if self.object then
@@ -57,6 +58,6 @@ minetest.register_tool("ballistics:test_tool", {
 	on_secondary_use = function(itemstack, user, pointed_thing) end,
 
 	on_use = function(itemstack, user, pointed_thing)
-		api.player_shoots("ballistics:test", user, 30)
+		ballistics.player_shoots("ballistics:test", user, 30)
 	end,
 })
