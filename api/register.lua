@@ -1,6 +1,4 @@
-local deserialize = minetest.deserialize
-
-function ballistics.register_missile(name, def)
+function ballistics.register_projectile(name, def)
 	minetest.register_entity(name, {
 		initial_properties = {
 			physical = true,
@@ -28,82 +26,30 @@ function ballistics.register_missile(name, def)
 			show_on_minimap = def.show_on_minimap,
 		},
 
+		_drag_coefficient = def.drag_coefficient or 0,
+		_immortal = futil.coalesce(def.immortal, true),
+		_is_arrow = futil.coalesce(def.is_arrow, false),
+		_update_period = def.update_period,
+
 		_on_hit_node = def.on_hit_node,
 		_on_hit_object = def.on_hit_object,
 
+		_on_activate = def.on_activate,
 		on_activate = function(self, staticdata)
-			local obj = self.object
-			if not obj then
-				return
-			end
-
-			local initial_properties = deserialize(staticdata)
-
-			self._shoot_param = initial_properties.shoot_param
-			obj:set_velocity(initial_properties.velocity)
-			obj:set_acceleration(initial_properties.acceleration)
-
-			self._lifetime = 0
-			self._last_lifetime = 0
-			self._last_pos = obj:get_pos()
-			self._last_velocity = vector.copy(initial_properties.velocity)
-
-			if def.immortal ~= false then
-				self.object:set_armor_groups({ immortal = 1 })
-			end
-
-			ballistics.set_initial_pitch(self)
-
-			if def.on_activate then
-				def.on_activate(self, staticdata)
-			end
+			ballistics.on_activate(self, staticdata)
 		end,
 
+		on_attach_child = def.on_attach_child,
 		on_deactivate = def.on_deactivate,
 		on_death = def.on_death,
+		on_detach = def.on_detach,
+		on_detach_child = def.on_detach_child,
 		on_punch = def.on_punch,
 		on_rightclick = def.on_rightclick,
 
+		_on_step = def._on_step,
 		on_step = function(self, dtime, moveresult)
-			local obj = self.object
-			if not obj then
-				return
-			end
-			local pos = obj:get_pos()
-			if not pos then
-				return
-			end
-			local vel = obj:get_velocity()
-
-			self._lifetime = (self._lifetime or 0) + dtime
-			if def.on_step then
-				if def.on_step(self, dtime, moveresult) then
-					self._last_lifetime = self._lifetime
-					self._last_pos = pos
-					self._last_velocity = vel
-					return
-				end
-			end
-
-			-- first, handle collisions
-			if moveresult then
-				for _, collision in ipairs(moveresult.collisions) do
-					if ballistics.handle_collision(self, collision) then
-						self._last_lifetime = self._lifetime
-						self._last_pos = pos
-						self._last_velocity = vel
-						return
-					end
-				end
-			end
-
-			if def.is_arrow then
-				ballistics.adjust_pitch(self, dtime, def.update_period)
-			end
-
-			self._last_lifetime = self._lifetime
-			self._last_pos = pos
-			self._last_velocity = vel
+			ballistics.on_step(self, dtime, moveresult)
 		end,
 	})
 end

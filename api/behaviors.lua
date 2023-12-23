@@ -1,5 +1,6 @@
 local threshold = 0.0001
 
+--
 -- https://palitri.com/vault/stuff/maths/Rays%20closest%20point.pdf
 local function correct_position(self, cur_pos, cur_vel)
 	local last_pos = self._last_pos
@@ -53,6 +54,10 @@ function ballistics.on_hit_object_stick(self, object, axis, old_velocity, new_ve
 	end
 
 	ballistics.freeze(self)
+	local entity = object:get_luaentity()
+	if entity and entity.name == self.name then
+		return
+	end
 	self.object:set_attach(object)
 end
 

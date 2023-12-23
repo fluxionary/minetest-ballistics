@@ -4,10 +4,11 @@ local v_rotate_around_axis = vector.rotate_around_axis
 local serialize = minetest.serialize
 
 local movement_gravity = tonumber(minetest.settings:get("movement_gravity")) or 9.81
-local acceleration_due_to_gravity = v_new(0, -movement_gravity, 0)
+local acceleration_due_to_gravity = v_new(0, -2 * movement_gravity, 0)
 
+-- may return nil
 function ballistics.shoot(entity_name, pos, vel, acc, shoot_param)
-	local obj = minetest.add_entity(
+	return minetest.add_entity(
 		pos,
 		entity_name,
 		serialize({
@@ -16,14 +17,6 @@ function ballistics.shoot(entity_name, pos, vel, acc, shoot_param)
 			acceleration = acc or acceleration_due_to_gravity,
 		})
 	)
-	if not obj then
-		return
-	end
-	local ent = obj:get_luaentity()
-	if not ent then
-		return
-	end
-	return obj, ent
 end
 
 function ballistics.player_shoots(entity_name, player, speed, gravity, shoot_param)
