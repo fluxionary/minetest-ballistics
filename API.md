@@ -58,3 +58,17 @@ ballistics.register_projectile("mymod:myarrow", {
   gravity and shoot_param as above. speed is a scalar, and the player must exist and be logged in. this function is
   a wrapper around the above, which automatically calculates the velocity depending on where the player is looking
   and the player's own velocity.
+
+## pre-defined callbacks ##
+
+* `on_hit_node = ballistics.on_hit_node_freeze`
+
+  when the projectile hits a node, it will stop moving
+
+* `on_hit_object = ballistics.on_hit_object_stick`
+
+  when the projectile hits an object, it will attach itself to the object
+
+* `on_punch = on_punch_redirect`
+
+  when the projectile is punched, redirect the projectile in the direction it was punched.

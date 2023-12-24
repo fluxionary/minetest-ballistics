@@ -29,7 +29,7 @@ function ballistics.on_activate(self, staticdata)
 		self.object:set_armor_groups({ immortal = 1 })
 	end
 
-	ballistics.set_initial_pitch(self)
+	ballistics.set_initial_yaw(self)
 
 	if self._on_activate then
 		self._on_activate(self, staticdata)
@@ -127,7 +127,7 @@ function ballistics.freeze(self)
 	self._frozen = true
 end
 
-function ballistics.set_initial_pitch(self)
+function ballistics.set_initial_yaw(self)
 	if not self.object then
 		return
 	end

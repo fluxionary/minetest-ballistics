@@ -62,6 +62,9 @@ function ballistics.on_hit_object_stick(self, object, axis, old_velocity, new_ve
 end
 
 function ballistics.on_punch_redirect(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
+	if not dir then
+		return
+	end
 	if not self.object then
 		return
 	end
