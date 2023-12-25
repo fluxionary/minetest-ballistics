@@ -5,12 +5,12 @@ local get_node = minetest.get_node
 local density = {}
 
 local function is_full_node(def)
-	local box = def.node_box or def.collision_box
+	local box = def.collision_box or def.node_box
 	if not box then
 		return true
 	elseif box.type == "regular" then
 		return true
-	elseif box.type == "fixed" and futil.is_box(box.fixed) then
+	elseif box.type == "fixed" then
 		return futil.equals(box.fixed, { -0.5, -0.5, -0.5, 0.5, 0.5, 0.5 })
 	end
 	return false

@@ -1,4 +1,4 @@
-futil.check_version({ year = 2023, month = 12, day = 21 }) -- get_velocity
+futil.check_version({ year = 2023, month = 12, day = 24 }) -- matrix/rotation stuff
 
 ballistics = fmod.create()
 
