@@ -80,6 +80,7 @@ function ballistics.on_step(self, dtime, moveresult)
 	self._last_velocity = vel
 end
 
+-- if true is returned, the rest of the on_step callback isn't called - assume the object was removed.
 function ballistics.handle_collision(self, collision)
 	if collision.type == "node" then
 		if self._on_hit_node then
@@ -87,7 +88,7 @@ function ballistics.handle_collision(self, collision)
 			local node = minetest.get_node_or_nil(pos)
 
 			if not node then
-				self.object.remove()
+				self.object:remove()
 				return true
 			end
 

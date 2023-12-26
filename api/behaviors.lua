@@ -1,6 +1,8 @@
+--- on_hit_node callbacks ---
+
 local threshold = 0.0001
 
--- because objects keep moving after colliding...
+-- because objects keep moving after colliding, use geometry to figure our approximate location of the actual collision
 -- https://palitri.com/vault/stuff/maths/Rays%20closest%20point.pdf
 local function correct_position(self, cur_pos, cur_vel)
 	local last_pos = self._last_pos
@@ -41,8 +43,88 @@ function ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity,
 	correct_position(self, pos, new_velocity)
 
 	ballistics.freeze(self)
+end
+
+function ballistics.on_hit_node_add_entity(self, node_pos, node, axis, old_velocity, new_velocity)
+	local entity_name = self._properties.add_entity.entity_name
+	local chance = self._properties.add_entity.chance or 1
+	local staticdata = self._properties.add_entity.staticdata
+	if math.random(chance) == 1 then
+		local last_pos = self._last_pos:round()
+		local delta = vector.zero()
+		if axis == "x" then
+			if node_pos.x < last_pos.x then
+				delta = vector.new(1, 0, 0)
+			else
+				delta = vector.new(-1, 0, 0)
+			end
+		elseif axis == "y" then
+			if node_pos.y < last_pos.y then
+				delta = vector.new(0, 1, 0)
+			else
+				delta = vector.new(0, -1, 0)
+			end
+		elseif axis == "z" then
+			if node_pos.z < last_pos.z then
+				delta = vector.new(0, 0, 1)
+			else
+				delta = vector.new(0, 0, -1)
+			end
+		end
+		minetest.add_entity(node_pos + delta, entity_name, staticdata)
+	end
+
+	self.object:remove()
 	return true
 end
+
+if minetest.get_modpath("tnt") then
+	function ballistics.on_hit_node_boom(self, node_pos, node, axis, old_velocity, new_velocity)
+		local boom = self._properties.boom or {}
+		local def = table.copy(boom)
+		if self._source_obj and minetest.is_player(self._source_obj) then
+			def.owner = self._source_obj:get_player_name()
+		end
+		self.object:remove()
+		tnt.boom(node_pos, def)
+		return true
+	end
+end
+
+function ballistics.on_hit_node_bounce(self, node_pos, node, axis, old_velocity)
+	local bounce = self._properties.bounce or {}
+	local efficiency = bounce.efficiency or 1
+	local clamp = bounce.clamp or 0
+
+	local new_velocity = vector.copy(old_velocity)
+	if axis == "x" then
+		new_velocity.x = -new_velocity.x * efficiency
+	elseif axis == "y" then
+		new_velocity.y = -new_velocity.y * efficiency
+	elseif axis == "z" then
+		new_velocity.z = -new_velocity.z * efficiency
+	end
+
+	if math.abs(new_velocity.x) <= clamp then
+		new_velocity.x = 0
+	end
+	if math.abs(new_velocity.y) <= clamp then
+		new_velocity.y = 0
+	end
+	if math.abs(new_velocity.z) <= clamp then
+		new_velocity.z = 0
+	end
+
+	self.object:set_velocity(new_velocity)
+	return true
+end
+
+function ballistics.on_hit_node_dig(self, node_pos, node, axis, old_velocity, new_velocity)
+	minetest.node_dig(node_pos, node, self._source_obj)
+end
+
+--- end on_hit_node callbacks ---
+--- on_hit_object callbacks ---
 
 local function get_target_visual_size(target)
 	local parent = target:get_attach()
@@ -53,6 +135,7 @@ local function get_target_visual_size(target)
 	return target:get_properties().visual_size
 end
 
+-- TODO: this function currently does *NOT* work correctly
 function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_velocity)
 	local our_obj = self.object
 	if not self.object then
@@ -86,7 +169,7 @@ function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_ve
 	--	end
 	--end
 
-	-- TODO: need to rotate the position... around what exactly?
+	-- TODO: need to rotate the position too... around what exactly?
 
 	-- after, to allow the visual size to propagate
 	minetest.after(0, function()
@@ -97,18 +180,78 @@ function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_ve
 	end)
 end
 
+local function scale_tool_capabilities(tool_capabilities, scale_speed, velocity)
+	local speed = velocity:length()
+	local scale = speed / scale_speed
+	local scaled_caps = table.copy(tool_capabilities)
+	for group, damage in pairs(scaled_caps.damage_groups) do
+		scaled_caps.damage_groups[group] = futil.math.probabilistic_round(damage * scale)
+	end
+	return scaled_caps
+end
+
+function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_velocity)
+	assert(
+		self._properties.punch and self._properties.punch.tool_capabilities,
+		"must specify _properties.punch.tool_capabilities in the projectile's definition"
+	)
+	local tool_capabilities = self._properties.punch.tool_capabilities
+	local scale_speed = self._properties.punch.scale_speed or 20
+	local remove = futil.coalesce(self._properties.punch.remove, false)
+	local direction = (target:get_pos() - self._last_pos):normalize()
+	local puncher
+	if self._source_obj and self._source_obj:get_pos() then
+		puncher = self._source_obj
+	else
+		puncher = self.object
+	end
+	target:punch(
+		puncher,
+		tool_capabilities.full_punch_interval or math.huge,
+		scale_tool_capabilities(tool_capabilities, scale_speed, old_velocity),
+		direction
+	)
+	if remove then
+		self.object:remove()
+	end
+end
+
+--- end on_hit_object callbacks ---
+--- on_punch callbacks ---
+
 function ballistics.on_punch_redirect(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
 	if not dir then
 		return
 	end
-	if not self.object then
+	local obj = self.object
+	if not obj then
 		return
 	end
-	local velocity = self.object:get_velocity()
+	local velocity = obj:get_velocity()
 	if not velocity then
 		return
 	end
 	local speed = velocity:length()
-	self.object:set_velocity(dir * speed)
+	obj:set_velocity(dir * speed)
+end
+
+function ballistics.on_punch_drop_item(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
+	assert(
+		self._properties.drop_item and self._properties.drop_item.item,
+		"must specify projectile_properties.drop_item.item in projectile definition"
+	)
+	local item = self._properties.drop_item.item
+	local chance = self._properties.drop_item.chance or 1
+	local obj = self.object
+	if obj:get_velocity():length() > 0.001 then
+		-- only drop as an item if not moving
+		return
+	end
+	if math.random(chance) == 1 then
+		minetest.add_item(obj:get_pos(), item)
+	end
+	self.obj:remove()
 	return true
 end
+
+--- end on_punch callbacks ---

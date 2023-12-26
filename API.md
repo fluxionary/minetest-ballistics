@@ -48,12 +48,12 @@ ballistics.register_projectile("mymod:myarrow", {
 })
 ```
 
-* `ballistics.shoot(entity_name, pos, vel, [acc, [shoot_param]])`
+* `ballistics.shoot(entity_name, pos, vel, [acc, [source_obj, [shoot_params]]])`
 
   if acceleration is not specified or nil, it will be chosen to be the server's standard gravity.
   shoot_param is additional data to pass to the entity when it is initialized. it must be serializable.
 
-* `ballistics.player_shoots(entity_name, player, speed, gravity, shoot_param)`
+* `ballistics.player_shoots(entity_name, player, speed, [gravity, [shoot_params]])`
 
   gravity and shoot_param as above. speed is a scalar, and the player must exist and be logged in. this function is
   a wrapper around the above, which automatically calculates the velocity depending on where the player is looking
@@ -63,11 +63,12 @@ ballistics.register_projectile("mymod:myarrow", {
 
 * `on_hit_node = ballistics.on_hit_node_freeze`
 
-  when the projectile hits a node, it will stop moving
+  when the projectile hits a node, it will stop moving.
 
 * `on_hit_object = ballistics.on_hit_object_stick`
 
-  when the projectile hits an object, it will attach itself to the object
+  when the projectile hits an object, it will attach itself to the object.
+  TODO: this function currently does *NOT* work correctly.
 
 * `on_punch = on_punch_redirect`
 

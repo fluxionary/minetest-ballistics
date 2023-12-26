@@ -34,6 +34,8 @@ function ballistics.register_projectile(name, def)
 		_on_hit_node = def.on_hit_node,
 		_on_hit_object = def.on_hit_object,
 
+		_properties = def.projectile_properties,
+
 		_on_activate = def.on_activate,
 		on_activate = function(self, staticdata)
 			ballistics.on_activate(self, staticdata)

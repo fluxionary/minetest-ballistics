@@ -7,19 +7,28 @@ local movement_gravity = tonumber(minetest.settings:get("movement_gravity")) or 
 local acceleration_due_to_gravity = v_new(0, -2 * movement_gravity, 0)
 
 -- may return nil
-function ballistics.shoot(entity_name, pos, vel, acc, shoot_param)
-	return minetest.add_entity(
+function ballistics.shoot(entity_name, pos, vel, acc, source_obj, shoot_params)
+	local obj = minetest.add_entity(
 		pos,
 		entity_name,
 		serialize({
-			shoot_param = shoot_param,
+			shoot_params = shoot_params,
 			velocity = vel,
 			acceleration = acc or acceleration_due_to_gravity,
 		})
 	)
+	if not obj then
+		return
+	end
+	local ent = obj:get_luaentity()
+	if not ent then
+		return
+	end
+	ent._source_obj = source_obj
+	return obj
 end
 
-function ballistics.player_shoots(entity_name, player, speed, gravity, shoot_param)
+function ballistics.player_shoots(entity_name, player, speed, gravity, shoot_params)
 	if not futil.is_player(player) then
 		return
 	end
@@ -33,6 +42,7 @@ function ballistics.player_shoots(entity_name, player, speed, gravity, shoot_par
 		start,
 		(look * speed) + futil.get_velocity(player),
 		v_new(0, -2 * (gravity or movement_gravity), 0),
-		shoot_param
+		player,
+		shoot_params
 	)
 end

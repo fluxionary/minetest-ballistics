@@ -1,2 +1,3 @@
 temporary models:
 * ballistics_arrow.b3d is from x_bows
+* ballistics_ball.x is from https://github.com/kaeza/minetest-soccer.git
