@@ -1,0 +1,19 @@
+* [ ] change all set_velocity to add_velocity if possible
+* [x] see notes.txt
+ * [ ] cannons!
+ * [ ] electrumese sword!
+ * [ ] spears!
+ * [ ] snowball!
+* [ ] documentation
+ * [ ] the whole api
+ * [ ] suggestions about how to achieve specific effects
+* [ ] on_punch_add_velocity needs refinement to how
+* [ ] whoosh sound
+* [ ] parameters for pitch adjustment, to reduce its impact on network performance
+
+future release:
+* [ ] wind
+* [ ] ability to specify multiple nodes and groups for replace_node
+* [ ] implement bounce off entities
+* [ ] figure out why bouncing balls never stop moving
+* [ ] figure out how to get arrows to stick in objects in a reasonable manner

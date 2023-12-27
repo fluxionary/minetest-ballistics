@@ -7,41 +7,41 @@ need to support:
  * dungeon master
   * [x] projectile travels in a straight line
   * [x] projectile can be punched mid-flight, changing its direction
-  * [ ] projectile explodes when hitting a player or node
+  * [x] projectile explodes when hitting a player or node
  * mese monster
   * [x] projectile travels in a straight line
   * [x] projectile punches object on collision
  * obsidian flan
   * [x] projectile travels in a straight line
   * [x] projectile punches object on collision
-  * [ ] projectile destroys node on collision
+  * [x] projectile destroys node on collision
  * spider
   * [x] projectile travels in a straight line
-  * [ ] projectile turns into a web node when hitting an object or node
+  * [x] projectile turns into a web node when hitting an object or node
 * mobs_animal
  * chicken egg
-  * [ ] egg can be thrown, chance to spawn a chick on hit a node or player
+  * [x] egg can be thrown, chance to spawn a chick on hit a node or player
 * mobs_hamlet
  * mobs_skeletons
   * not sure what's up here
  * mobs mime
   * [x] projectile travels in a straight line
-  * [ ] projectile turns into a bunch of glue sources when hitting a node or object
+  * [x] projectile turns into a bunch of glue sources when hitting a node or object
  * mobs_gazer
   * [x] projectile travels in a straight line
-  * [ ] projectile turns into a bunch of gas nodes when hitting a node or object
+  * [x] projectile turns into a bunch of gas nodes when hitting a node or object
  * mobs_umbra
   * [x] projectile travels in a straight line
-  * [ ] projectile turns into a bunch of obscure nodes when hitting a node or object
+  * [x] projectile turns into a bunch of obscure nodes when hitting a node or object
 * nether_mobs
  * dragon
   * [x] projectile travels in a straight line
   * [x] projectile punches an object on collision
-  * [ ] projectile turns into a bunch of flame nodes when hitting a node or object
+  * [x] projectile turns into a bunch of flame nodes when hitting a node or object
 * yl_nether_mobs
  * blaze
   * [x] projectile travels in a straight line
-  * [ ] projectile turns into a bunch of flame nodes on collision
+  * [x] projectile turns into a bunch of flame nodes on collision
  * wither
   * [x] projectile travels in a straight line
-  * [ ] projectile explodes when it hits a node or player
+  * [x] projectile explodes when it hits a node or player

@@ -33,10 +33,8 @@ local function correct_position(self, cur_pos, cur_vel)
 end
 
 function ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity, new_velocity)
-	if not self.object then
-		return
-	end
-	local pos = self.object:get_pos()
+	local obj = self.object
+	local pos = obj:get_pos()
 	if not pos then
 		return
 	end
@@ -45,33 +43,41 @@ function ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity,
 	ballistics.freeze(self)
 end
 
-function ballistics.on_hit_node_add_entity(self, node_pos, node, axis, old_velocity, new_velocity)
-	local entity_name = self._properties.add_entity.entity_name
-	local chance = self._properties.add_entity.chance or 1
-	local staticdata = self._properties.add_entity.staticdata
-	if math.random(chance) == 1 then
-		local last_pos = self._last_pos:round()
-		local delta = vector.zero()
-		if axis == "x" then
-			if node_pos.x < last_pos.x then
-				delta = vector.new(1, 0, 0)
-			else
-				delta = vector.new(-1, 0, 0)
-			end
-		elseif axis == "y" then
-			if node_pos.y < last_pos.y then
-				delta = vector.new(0, 1, 0)
-			else
-				delta = vector.new(0, -1, 0)
-			end
-		elseif axis == "z" then
-			if node_pos.z < last_pos.z then
-				delta = vector.new(0, 0, 1)
-			else
-				delta = vector.new(0, 0, -1)
-			end
+local function get_adjacent_node(self, node_pos, axis)
+	local last_pos = self._last_pos:round()
+	local delta = vector.zero()
+	if axis == "x" then
+		if node_pos.x < last_pos.x then
+			delta = vector.new(1, 0, 0)
+		else
+			delta = vector.new(-1, 0, 0)
 		end
-		minetest.add_entity(node_pos + delta, entity_name, staticdata)
+	elseif axis == "y" then
+		if node_pos.y < last_pos.y then
+			delta = vector.new(0, 1, 0)
+		else
+			delta = vector.new(0, -1, 0)
+		end
+	elseif axis == "z" then
+		if node_pos.z < last_pos.z then
+			delta = vector.new(0, 0, 1)
+		else
+			delta = vector.new(0, 0, -1)
+		end
+	end
+	return node_pos + delta
+end
+
+function ballistics.on_hit_node_add_entity(self, node_pos, node, axis, old_velocity, new_velocity)
+	local pprops = self._projectile_properties.add_entity
+	assert(pprops, "must define projectile_properties.add_entity in projectile definition")
+	local entity_name = pprops.entity_name
+	assert(pprops, "must specify projectile_properties.add_entity.entity_name in projectile definition")
+	local chance = pprops.chance or 1
+	local staticdata = pprops.staticdata
+
+	if math.random(chance) == 1 then
+		minetest.add_entity(get_adjacent_node(self, node_pos, axis), entity_name, staticdata)
 	end
 
 	self.object:remove()
@@ -80,7 +86,7 @@ end
 
 if minetest.get_modpath("tnt") then
 	function ballistics.on_hit_node_boom(self, node_pos, node, axis, old_velocity, new_velocity)
-		local boom = self._properties.boom or {}
+		local boom = self._projectile_properties.boom or {}
 		local def = table.copy(boom)
 		if self._source_obj and minetest.is_player(self._source_obj) then
 			def.owner = self._source_obj:get_player_name()
@@ -91,36 +97,65 @@ if minetest.get_modpath("tnt") then
 	end
 end
 
+-- TODO: the ball never stops bouncing and rolls endlessly?
 function ballistics.on_hit_node_bounce(self, node_pos, node, axis, old_velocity)
-	local bounce = self._properties.bounce or {}
+	local bounce = self._projectile_properties.bounce or {}
 	local efficiency = bounce.efficiency or 1
 	local clamp = bounce.clamp or 0
 
-	local new_velocity = vector.copy(old_velocity)
+	local delta_velocity = vector.zero()
 	if axis == "x" then
-		new_velocity.x = -new_velocity.x * efficiency
+		local dx = -old_velocity.x * efficiency
+		if dx > clamp then
+			delta_velocity.x = dx
+		end
 	elseif axis == "y" then
-		new_velocity.y = -new_velocity.y * efficiency
+		local dy = -old_velocity.y * efficiency
+		if dy > clamp then
+			delta_velocity.y = dy
+		end
 	elseif axis == "z" then
-		new_velocity.z = -new_velocity.z * efficiency
+		local dz = -old_velocity.z * efficiency
+		if dz > clamp then
+			delta_velocity.z = dz
+		end
 	end
 
-	if math.abs(new_velocity.x) <= clamp then
-		new_velocity.x = 0
+	if not delta_velocity:equals(vector.zero()) then
+		self.object:add_velocity(delta_velocity)
 	end
-	if math.abs(new_velocity.y) <= clamp then
-		new_velocity.y = 0
-	end
-	if math.abs(new_velocity.z) <= clamp then
-		new_velocity.z = 0
-	end
-
-	self.object:set_velocity(new_velocity)
-	return true
 end
 
 function ballistics.on_hit_node_dig(self, node_pos, node, axis, old_velocity, new_velocity)
 	minetest.node_dig(node_pos, node, self._source_obj)
+	self.object:remove()
+	return true
+end
+
+-- TODO: allow specifying multiple possible targets, groups
+function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity, new_velocity)
+	local pprops = self._projectile_properties.replace
+	assert(pprops, "must specify projectile_properties.replace in projectile definition")
+	local target = pprops.target or "air"
+	local replacement = pprops.replacement
+	assert(replacement, "must specify projectile_properties.replace.replacement in projectile definition")
+	if type(replacement) == "string" then
+		replacement = { name = replacement }
+	end
+	local radius = pprops.radius or 0
+	local pos0 = get_adjacent_node(self, node_pos, axis)
+	for x = -radius, radius do
+		for y = -radius, radius do
+			for z = -radius, radius do
+				local pos = pos0:offset(x, y, z)
+				if minetest.get_node(pos).name == target then
+					minetest.set_node(pos, replacement)
+				end
+			end
+		end
+	end
+	self.object:remove()
+	return true
 end
 
 --- end on_hit_node callbacks ---
@@ -137,18 +172,15 @@ end
 
 -- TODO: this function currently does *NOT* work correctly
 function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_velocity)
-	local our_obj = self.object
-	if not self.object then
-		return
-	end
-	if not our_obj:get_pos() then
+	local obj = self.object
+	if not obj:get_pos() then
 		return
 	end
 
 	ballistics.freeze(self)
 	local target_visual_size = get_target_visual_size(target)
-	local our_visual_size = our_obj:get_properties().visual_size
-	our_obj:set_properties({
+	local our_visual_size = obj:get_properties().visual_size
+	obj:set_properties({
 		-- note: using `:divide` to get schur quotient is deprecated
 		visual_size = vector.new(
 			our_visual_size.x / target_visual_size.x,
@@ -156,7 +188,7 @@ function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_ve
 			our_visual_size.z / target_visual_size.z
 		),
 	})
-	local our_rotation = our_obj:get_rotation()
+	local our_rotation = obj:get_rotation()
 	local target_rotation = target:get_rotation()
 	local rotation = futil.vector.compose_rotations(futil.vector.inverse_rotation(target_rotation), our_rotation)
 
@@ -173,10 +205,10 @@ function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_ve
 
 	-- after, to allow the visual size to propagate
 	minetest.after(0, function()
-		if not (our_obj:get_pos() and target:get_pos()) then
+		if not (obj:get_pos() and target:get_pos()) then
 			return
 		end
-		our_obj:set_attach(target, "", position, rotation:apply(math.deg))
+		obj:set_attach(target, "", position, rotation:apply(math.deg))
 	end)
 end
 
@@ -191,13 +223,14 @@ local function scale_tool_capabilities(tool_capabilities, scale_speed, velocity)
 end
 
 function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_velocity)
+	local pprops = self._projectile_properties.punch
 	assert(
-		self._properties.punch and self._properties.punch.tool_capabilities,
-		"must specify _properties.punch.tool_capabilities in the projectile's definition"
+		pprops and pprops.tool_capabilities,
+		"must specify projectile_properties.punch.tool_capabilities in the projectile's definition"
 	)
-	local tool_capabilities = self._properties.punch.tool_capabilities
-	local scale_speed = self._properties.punch.scale_speed or 20
-	local remove = futil.coalesce(self._properties.punch.remove, false)
+	local tool_capabilities = pprops.tool_capabilities
+	local scale_speed = pprops.scale_speed or 20
+	local remove = futil.coalesce(pprops.remove, false)
 	local direction = (target:get_pos() - self._last_pos):normalize()
 	local puncher
 	if self._source_obj and self._source_obj:get_pos() then
@@ -213,20 +246,102 @@ function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_ve
 	)
 	if remove then
 		self.object:remove()
+		return true
 	end
+end
+
+function ballistics.on_hit_object_add_entity(self, target, axis, old_velocity, new_velocity)
+	local pprops = self._projectile_properties.add_entity
+	local entity_name = pprops.entity_name
+	local chance = pprops.chance or 1
+	local staticdata = pprops.staticdata
+
+	local target_pos = target:get_pos()
+	if target_pos and math.random(chance) == 1 then
+		local last_pos = self._last_pos:round()
+		local delta = vector.zero()
+		if axis == "x" then
+			if target_pos.x < last_pos.x then
+				delta = vector.new(1, 0, 0)
+			else
+				delta = vector.new(-1, 0, 0)
+			end
+		elseif axis == "y" then
+			if target_pos.y < last_pos.y then
+				delta = vector.new(0, 1, 0)
+			else
+				delta = vector.new(0, -1, 0)
+			end
+		elseif axis == "z" then
+			if target_pos.z < last_pos.z then
+				delta = vector.new(0, 0, 1)
+			else
+				delta = vector.new(0, 0, -1)
+			end
+		end
+		minetest.add_entity(target_pos + delta, entity_name, staticdata)
+	end
+
+	self.object:remove()
+	return true
+end
+
+if minetest.get_modpath("tnt") then
+	function ballistics.on_hit_object_boom(self, target, axis, old_velocity, new_velocity)
+		local boom = self._projectile_properties.boom or {}
+		local def = table.copy(boom)
+		if self._source_obj and minetest.is_player(self._source_obj) then
+			def.owner = self._source_obj:get_player_name()
+		end
+		local our_pos = self.object:get_pos() or self._last_pos
+		self.object:remove()
+		local target_pos = target:get_pos()
+		if target_pos then
+			tnt.boom(target_pos, def)
+		else
+			tnt.boom(our_pos, def)
+		end
+		return true
+	end
+end
+
+-- TODO: allow specifying multiple possible targets, groups
+function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_velocity)
+	local pprops = self._projectile_properties.replace
+	assert(pprops, "must specify projectile_properties.replace in projectile definition")
+	local target = pprops.target or "air"
+	local replacement = pprops.replacement
+	assert(replacement, "must specify projectile_properties.replace.replacement in projectile definition")
+	if type(replacement) == "string" then
+		replacement = { name = replacement }
+	end
+	local radius = pprops.radius or 0
+	local pos0 = object:get_pos():round()
+	if not pos0 then
+		return
+	end
+	for x = -radius, radius do
+		for y = -radius, radius do
+			for z = -radius, radius do
+				local pos = pos0:offset(x, y, z)
+				if minetest.get_node(pos).name == target then
+					minetest.set_node(pos, replacement)
+				end
+			end
+		end
+	end
+	self.object:remove()
+	return true
 end
 
 --- end on_hit_object callbacks ---
 --- on_punch callbacks ---
 
-function ballistics.on_punch_redirect(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
+function ballistics.on_punch_deflect(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
 	if not dir then
 		return
 	end
 	local obj = self.object
-	if not obj then
-		return
-	end
 	local velocity = obj:get_velocity()
 	if not velocity then
 		return
@@ -235,13 +350,24 @@ function ballistics.on_punch_redirect(self, puncher, time_from_last_punch, tool_
 	obj:set_velocity(dir * speed)
 end
 
+function ballistics.on_punch_add_velocity(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
+	if not dir then
+		return
+	end
+	local obj = self.object
+	local velocity = obj:get_velocity()
+	if not velocity then
+		return
+	end
+	-- TODO create a projectile_property to scale this somehow
+	obj:add_velocity(dir * damage)
+end
+
 function ballistics.on_punch_drop_item(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
-	assert(
-		self._properties.drop_item and self._properties.drop_item.item,
-		"must specify projectile_properties.drop_item.item in projectile definition"
-	)
-	local item = self._properties.drop_item.item
-	local chance = self._properties.drop_item.chance or 1
+	local pprops = self._projectile_properties.drop_item
+	assert(pprops and pprops.item, "must specify projectile_properties.drop_item.item in projectile definition")
+	local item = pprops.item
+	local chance = pprops.chance or 1
 	local obj = self.object
 	if obj:get_velocity():length() > 0.001 then
 		-- only drop as an item if not moving
@@ -255,3 +381,37 @@ function ballistics.on_punch_drop_item(self, puncher, time_from_last_punch, tool
 end
 
 --- end on_punch callbacks ---
+--- on_step callbacks ---
+
+function ballistics.on_step_particles(self, dtime, moveresult)
+	local obj = self.object
+	local pos = obj:get_pos()
+	if not pos then
+		return
+	end
+
+	if obj:get_attach() or obj:get_velocity():length() < 0.01 then
+		return
+	end
+
+	local pprops = self._projectile_properties.particles
+	assert(pprops, "must specify projectile_properties.particles in projectile definition (a particlespawner)")
+
+	if pprops._period then
+		local elapsed = (self._particles_elapsed or 0) + dtime
+		if elapsed < pprops._period then
+			self._particles_elapsed = elapsed
+			return
+		else
+			self._particles_elapsed = elapsed - pprops._period
+		end
+	end
+
+	local def = table.copy(pprops)
+	def.minpos = def._delta_minpos and pos + def._delta_minpos or pos
+	def.maxpos = def._delta_maxpos and pos + def._delta_maxpos or pos
+
+	minetest.add_particlespawner(def)
+end
+
+--- end on_step callbacks ---

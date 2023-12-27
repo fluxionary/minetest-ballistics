@@ -1,3 +1,4 @@
-temporary models:
-* ballistics_arrow.b3d is from x_bows
-* ballistics_ball.x is from https://github.com/kaeza/minetest-soccer.git
+* (C) 2023 SaKeL <juraj.vajda@gmail.com> CC-BY-SA-4.0 https://bitbucket.org/minetest_gamers/x_bows/
+ * ballistics_arrow.b3d
+* (C) 2013 Diego Martínez BSD 2 clause https://github.com/kaeza/minetest-soccer.git
+ * ballistics_ball.x

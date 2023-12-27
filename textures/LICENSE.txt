@@ -1,5 +1,8 @@
-temporary textures:
-* ballistics_test_tool is the stick from minetest_game
-* ballistics_test is the steel arrow from x_bows
-* ballistics_arrow_mesh is from x_bows
-* ballistics_ball is from https://github.com/kaeza/minetest-soccer.git
+* (C) 2013 Diego Martínez BSD 2 clause https://github.com/kaeza/minetest-soccer.git
+ * ballistics_ball.png
+* (C) BlockMen CC BY-SA 3.0 https://github.com/minetest/minetest_game/
+ * ballistics_test_tool.png
+* (C) 2023 SaKeL <juraj.vajda@gmail.com> CC-BY-SA-4.0 https://bitbucket.org/minetest_gamers/x_bows/
+ * ballistics_arrow_mesh.png
+* (C) 2016 XSSheep CC-BY-SA-4.0 https://minecraft.curseforge.com/projects/pixel-perfection-freshly-updated
+ * ballistics_arrow_particle.png

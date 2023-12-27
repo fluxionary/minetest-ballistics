@@ -34,7 +34,7 @@ function ballistics.register_projectile(name, def)
 		_on_hit_node = def.on_hit_node,
 		_on_hit_object = def.on_hit_object,
 
-		_properties = def.projectile_properties,
+		_projectile_properties = def.projectile_properties,
 
 		_on_activate = def.on_activate,
 		on_activate = function(self, staticdata)
@@ -49,7 +49,7 @@ function ballistics.register_projectile(name, def)
 		on_punch = def.on_punch,
 		on_rightclick = def.on_rightclick,
 
-		_on_step = def._on_step,
+		_on_step = def.on_step,
 		on_step = function(self, dtime, moveresult)
 			ballistics.on_step(self, dtime, moveresult)
 		end,

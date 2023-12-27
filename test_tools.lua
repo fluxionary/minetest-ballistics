@@ -8,6 +8,30 @@ ballistics.register_projectile("ballistics:test_arrow", {
 
 	drag_coefficient = 0.1,
 
+	projectile_properties = {
+		particles = {
+			amount = 1,
+			time = 0.1,
+			texture = "ballistics_arrow_particle.png",
+			animation = {
+				type = "vertical_frames",
+				aspect_w = 8,
+				aspect_h = 8,
+				length = 1,
+			},
+			glow = 1,
+			minvel = { x = 0, y = -0.1, z = 0 },
+			maxvel = { x = 0, y = -0.1, z = 0 },
+			minacc = { x = 0, y = -0.1, z = 0 },
+			maxacc = { x = 0, y = -0.1, z = 0 },
+			minexptime = 0.5,
+			maxexptime = 0.5,
+			minsize = 2,
+			maxsize = 2,
+			_period = 0.09,
+		},
+	},
+
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
 		ballistics.chat_send_all("hit @1 @@ @2", node.name, minetest.pos_to_string(pos))
 		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)
@@ -41,6 +65,8 @@ ballistics.register_projectile("ballistics:test_arrow", {
 
 		return true
 	end,
+
+	on_step = ballistics.on_step_particles,
 })
 
 minetest.register_tool("ballistics:test_arrow", {
@@ -66,7 +92,7 @@ ballistics.register_projectile("ballistics:test_ball", {
 	projectile_properties = {
 		bounce = {
 			efficiency = 0.6,
-			clamp = 1,
+			clamp = 0.1,
 		},
 	},
 

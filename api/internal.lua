@@ -16,7 +16,11 @@ function ballistics.on_activate(self, staticdata)
 
 	local initial_properties = deserialize(staticdata)
 
-	self._shoot_param = initial_properties.shoot_param
+	local projectile_properties = table.copy(self._projectile_properties or {})
+	for key, value in pairs(initial_properties.projectile_properties or {}) do
+		projectile_properties[key] = value
+	end
+	self._projectile_properties = projectile_properties
 	obj:set_velocity(initial_properties.velocity)
 	obj:set_acceleration(initial_properties.acceleration)
 
@@ -48,40 +52,44 @@ function ballistics.on_step(self, dtime, moveresult)
 	local vel = obj:get_velocity()
 
 	self._lifetime = (self._lifetime or 0) + dtime
-	if self._on_step then
-		if self._on_step(self, dtime, moveresult) then
-			self._last_lifetime = self._lifetime
-			self._last_pos = pos
-			self._last_velocity = vel
-			return
-		end
+
+	local done = false -- whether to stop processing early
+	if self._on_step and self._on_step(self, dtime, moveresult) then
+		done = true
 	end
 
-	-- first, handle collisions
-	if moveresult then
+	if moveresult and not done then
 		for _, collision in ipairs(moveresult.collisions) do
-			if ballistics.handle_collision(self, collision) then
-				self._last_lifetime = self._lifetime
-				self._last_pos = pos
-				self._last_velocity = vel
-				return
+			if
+				ballistics.handle_collision(
+					self,
+					collision,
+					moveresult.touching_ground,
+					moveresult.collides,
+					moveresult.standing_on_object
+				)
+			then
+				done = true
+				break
 			end
 		end
 	end
 
-	if self._is_arrow then
-		ballistics.adjust_pitch(self, dtime, self._update_period)
-	end
+	if not done then
+		if self._is_arrow then
+			ballistics.adjust_pitch(self, dtime, self._update_period)
+		end
 
-	ballistics.apply_drag(self)
+		ballistics.apply_drag(self)
+	end
 
 	self._last_lifetime = self._lifetime
 	self._last_pos = pos
 	self._last_velocity = vel
 end
 
--- if true is returned, the rest of the on_step callback isn't called - assume the object was removed.
-function ballistics.handle_collision(self, collision)
+-- if true is returned, the rest of the on_step callback isn't called - generally, assume the object was removed.
+function ballistics.handle_collision(self, collision, touching_ground, collides, standing_on_object)
 	if collision.type == "node" then
 		if self._on_hit_node then
 			local pos = collision.node_pos
@@ -92,7 +100,19 @@ function ballistics.handle_collision(self, collision)
 				return true
 			end
 
-			if self._on_hit_node(self, pos, node, collision.axis, collision.old_velocity, collision.new_velocity) then
+			if
+				self._on_hit_node(
+					self,
+					pos,
+					node,
+					collision.axis,
+					collision.old_velocity,
+					collision.new_velocity,
+					touching_ground,
+					collides,
+					standing_on_object
+				)
+			then
 				return true
 			end
 		else
@@ -107,7 +127,10 @@ function ballistics.handle_collision(self, collision)
 					collision.object,
 					collision.axis,
 					collision.old_velocity,
-					collision.new_velocity
+					collision.new_velocity,
+					touching_ground,
+					collides,
+					standing_on_object
 				)
 			then
 				return true
@@ -129,14 +152,15 @@ function ballistics.freeze(self)
 end
 
 function ballistics.set_initial_yaw(self)
-	if not self.object then
+	local obj = self.object
+	if not obj then
 		return
 	end
-	local v = self.object:get_velocity()
+	local v = obj:get_velocity()
 	if not v then
 		return
 	end
-	self.object:set_yaw(minetest.dir_to_yaw(v:normalize()))
+	obj:set_yaw(minetest.dir_to_yaw(v:normalize()))
 end
 
 function ballistics.adjust_pitch(self, dtime, period)

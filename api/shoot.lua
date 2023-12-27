@@ -7,12 +7,12 @@ local movement_gravity = tonumber(minetest.settings:get("movement_gravity")) or 
 local acceleration_due_to_gravity = v_new(0, -2 * movement_gravity, 0)
 
 -- may return nil
-function ballistics.shoot(entity_name, pos, vel, acc, source_obj, shoot_params)
+function ballistics.shoot(entity_name, pos, vel, acc, source_obj, projectile_properties)
 	local obj = minetest.add_entity(
 		pos,
 		entity_name,
 		serialize({
-			shoot_params = shoot_params,
+			projectile_properties = projectile_properties,
 			velocity = vel,
 			acceleration = acc or acceleration_due_to_gravity,
 		})
@@ -28,8 +28,9 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, shoot_params)
 	return obj
 end
 
-function ballistics.player_shoots(entity_name, player, speed, gravity, shoot_params)
+function ballistics.player_shoots(entity_name, player, speed, gravity, projectile_properties)
 	if not futil.is_player(player) then
+		-- TODO: figure out fake player compatibility
 		return
 	end
 	local look = player:get_look_dir()
@@ -43,6 +44,6 @@ function ballistics.player_shoots(entity_name, player, speed, gravity, shoot_par
 		(look * speed) + futil.get_velocity(player),
 		v_new(0, -2 * (gravity or movement_gravity), 0),
 		player,
-		shoot_params
+		projectile_properties
 	)
 end
