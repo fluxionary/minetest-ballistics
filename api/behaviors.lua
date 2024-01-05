@@ -23,45 +23,14 @@ end
 --- end on_deactivate callbacks ---
 --- on_hit_node callbacks ---
 
-local threshold = 0.0001
-
--- because objects keep moving after colliding, use geometry to figure our approximate location of the actual collision
--- https://palitri.com/vault/stuff/maths/Rays%20closest%20point.pdf
-local function correct_position(self, cur_pos, cur_vel)
-	local last_pos = self._last_pos
-	local last_vel = self._last_velocity
-	local a = cur_vel
-	local b = last_vel
-	local a2 = a:dot(a)
-	if a2 < threshold then
-		return
-	end
-	local b2 = b:dot(b)
-	if b2 < threshold then
-		return
-	end
-	local ab = a:dot(b)
-	local denom = (a2 * b2) - (ab * ab)
-	if denom < threshold then
-		return
-	end
-	local A = cur_pos
-	local B = last_pos
-	local c = last_pos - cur_pos
-	local bc = b:dot(c)
-	local ac = a:dot(c)
-	local D = A + a * ((ac * b2 - ab * bc) / denom)
-	local E = B + b * ((ab * ac - bc * a2) / denom)
-	self.object:set_pos((D + E) / 2)
-end
-
 function ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity, new_velocity)
 	local obj = self.object
 	local pos = obj:get_pos()
 	if not pos then
 		return
 	end
-	correct_position(self, pos, new_velocity)
+
+	obj:set_pos(ballistics.get_collision_position(self._last_pos, self._last_velocity, pos, new_velocity))
 
 	ballistics.freeze(self)
 end
@@ -467,7 +436,6 @@ function ballistics.on_step_particles(self, dtime, moveresult)
 	minetest.add_particlespawner(def)
 end
 
--- TODO doesn't work
 function ballistics.on_step_seek_target(self, dtime, moveresult)
 	if self._frozen then
 		return
@@ -488,7 +456,8 @@ function ballistics.on_step_seek_target(self, dtime, moveresult)
 	local current_vel = obj:get_velocity()
 	local current_acc = obj:get_acceleration()
 
-	local delta = ballistics.calculate_initial_velocity(our_pos, target_pos, current_vel:length(), current_acc.y)
+	-- i'm not entirely sure why the target and source need to be switched?
+	local delta = ballistics.calculate_initial_velocity(target_pos, our_pos, current_vel:length(), current_acc.y)
 	if not delta then
 		return
 	end

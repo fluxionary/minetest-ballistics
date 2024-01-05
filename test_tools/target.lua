@@ -26,9 +26,13 @@ ballistics.register_projectile("ballistics:test_target", {
 
 	drag_coefficient = 0.0,
 
-	projectile_properties = {},
+	projectile_properties = {
+		seek_target = {
+			seek_velocity = 5,
+		},
+	},
 
-	--on_step = ballistics.on_step_seek_target,
+	on_step = ballistics.on_step_seek_target,
 
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
 		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)

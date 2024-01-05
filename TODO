@@ -1,15 +1,15 @@
 * [x] change all set_velocity to add_velocity if possible
 * [x] see notes.txt
 * [ ] documentation
- * [x] the whole api
+ * [ ] the whole api
  * [ ] suggestions about how to achieve specific effects
 * [x] on_punch_add_velocity needs refinement
 * [x] whoosh sound
  * https://github.com/minetest/minetest/issues/9172
 * [x] parameters for pitch adjustment, to reduce its impact on network performance
  * this is update_period
-* [ ] target seeking. as an on_activate and on_step behavior, perhaps?
-* [ ] calculate initial velocity given a source, target, initial speed, and gravity
+* [x] target seeking. as an on_activate and on_step behavior, perhaps?
+* [x] calculate initial velocity given a source, target, initial speed, and gravity
 
 future release:
 * [ ] wind

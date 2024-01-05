@@ -1,3 +1,5 @@
+## defining a projectile
+
 ```lua
 ballistics.register_projectile("mymod:myarrow", {
     -- visual parameters, see minetest's lua_api.md for details
@@ -36,6 +38,7 @@ ballistics.register_projectile("mymod:myarrow", {
 
     on_activate = function(self, staticdata)
         -- projectiles are ephemeral (they don't static save), but staticdata can be passed on creation
+        -- arrows initialize their
     end,
     on_attach_child = function(self, child) end,
     on_deactivate = function(self, removal) end,
@@ -48,6 +51,8 @@ ballistics.register_projectile("mymod:myarrow", {
 })
 ```
 
+## shooting
+
 * `ballistics.shoot(entity_name, pos, vel, [acc, [source_obj, [shoot_params]]])`
 
   if acceleration is not specified or nil, it will be chosen to be the server's standard gravity.
@@ -56,8 +61,8 @@ ballistics.register_projectile("mymod:myarrow", {
 * `ballistics.player_shoots(entity_name, player, speed, [gravity, [shoot_params]])`
 
   gravity and shoot_param as above. speed is a scalar, and the player must exist and be logged in. this function is
-  a wrapper around the above, which automatically calculates the velocity depending on where the player is looking
-  and the player's own velocity.
+  a wrapper around the above, which automatically calculates the projectile's initial velocity depending on where the
+  player is looking and the player's own velocity.
 
 ## pre-defined callbacks ##
 
