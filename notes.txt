@@ -45,3 +45,8 @@ need to support:
  * wither
   * [x] projectile travels in a straight line
   * [x] projectile explodes when it hits a node or player
+
+* [x] cannons!
+* [x] electrumese sword!
+* [x] spears!
+* [x] snowball!

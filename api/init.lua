@@ -1,3 +1,4 @@
+ballistics.dofile("api", "math")
 ballistics.dofile("api", "internal")
 ballistics.dofile("api", "drag")
 ballistics.dofile("api", "behaviors")

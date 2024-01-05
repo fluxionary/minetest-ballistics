@@ -1,3 +1,26 @@
+--- on_activate callbacks ---
+
+function ballistics.on_activate_sound_play(self, staticdata)
+	local pprops = self._projectile_properties.sound
+	local spec = pprops.spec
+	local parameters = table.copy(pprops.parameters or {})
+	parameters.pos = nil
+	parameters.object = self.object
+	parameters.to_player = nil
+	parameters.exclude_player = nil
+	self._sound_handle = minetest.sound_play(spec, parameters)
+end
+
+--- end on_activate callbacks ---
+--- on_deactivate callbacks ---
+
+function ballistics.on_deactivate_sound_stop(self, removal)
+	if self._sound_handle then
+		minetest.sound_stop(self._sound_handle)
+	end
+end
+
+--- end on_deactivate callbacks ---
 --- on_hit_node callbacks ---
 
 local threshold = 0.0001
@@ -158,6 +181,12 @@ function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity
 	return true
 end
 
+function ballistics.on_hit_node_sound_stop(self)
+	if self._sound_handle then
+		minetest.sound_stop(self._sound_handle)
+	end
+end
+
 --- end on_hit_node callbacks ---
 --- on_hit_object callbacks ---
 
@@ -182,6 +211,7 @@ function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_ve
 	local our_visual_size = obj:get_properties().visual_size
 	obj:set_properties({
 		-- note: using `:divide` to get schur quotient is deprecated
+		-- https://github.com/minetest/minetest/issues/12533
 		visual_size = vector.new(
 			our_visual_size.x / target_visual_size.x,
 			our_visual_size.y / target_visual_size.y,
@@ -190,6 +220,9 @@ function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_ve
 	})
 	local our_rotation = obj:get_rotation()
 	local target_rotation = target:get_rotation()
+	if not (our_rotation and target_rotation) then
+		return
+	end
 	local rotation = futil.vector.compose_rotations(futil.vector.inverse_rotation(target_rotation), our_rotation)
 
 	local target_center = futil.get_object_center(target)
@@ -334,6 +367,12 @@ function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_
 	return true
 end
 
+function ballistics.on_hit_object_sound_stop(self)
+	if self._sound_handle then
+		minetest.sound_stop(self._sound_handle)
+	end
+end
+
 --- end on_hit_object callbacks ---
 --- on_punch callbacks ---
 
@@ -350,6 +389,19 @@ function ballistics.on_punch_deflect(self, puncher, time_from_last_punch, tool_c
 	obj:set_velocity(dir * speed)
 end
 
+local add_velocity_scale = {
+	constant = function(pprops)
+		return (pprops.offset or 1)
+	end,
+	linear = function(pprops, damage)
+		if (pprops.input or "damage") == "damage" then
+			return (pprops.scale or 1) * damage + (pprops.offset or 0)
+		else
+			error(string.format("unknown input %s", pprops.input))
+		end
+	end,
+}
+
 function ballistics.on_punch_add_velocity(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
 	if not dir then
 		return
@@ -359,8 +411,9 @@ function ballistics.on_punch_add_velocity(self, puncher, time_from_last_punch, t
 	if not velocity then
 		return
 	end
-	-- TODO create a projectile_property to scale this somehow
-	obj:add_velocity(dir * damage)
+	local pprops = self._projectile_properties.add_velocity or {}
+	local scale = add_velocity_scale[pprops.scale or "constant"](pprops, damage)
+	obj:add_velocity(dir * scale)
 end
 
 function ballistics.on_punch_drop_item(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
@@ -412,6 +465,38 @@ function ballistics.on_step_particles(self, dtime, moveresult)
 	def.maxpos = def._delta_maxpos and pos + def._delta_maxpos or pos
 
 	minetest.add_particlespawner(def)
+end
+
+-- TODO doesn't work
+function ballistics.on_step_seek_target(self, dtime, moveresult)
+	if self._frozen then
+		return
+	end
+	local target = self._target_obj
+	if not target then
+		return
+	end
+	local target_pos = futil.get_object_center(target)
+	if not target_pos then
+		return
+	end
+	local obj = self.object
+	local our_pos = obj:get_pos()
+	if not our_pos then
+		return
+	end
+	local current_vel = obj:get_velocity()
+	local current_acc = obj:get_acceleration()
+
+	local delta = ballistics.calculate_initial_velocity(our_pos, target_pos, current_vel:length(), current_acc.y)
+	if not delta then
+		return
+	end
+
+	local pprops = self._projectile_properties.seek_target or {}
+	local seek_velocity = pprops.seek_velocity or 1
+	local new_vel = (current_vel + (delta:normalize() * seek_velocity)):normalize() * current_vel:length()
+	obj:set_velocity(new_vel)
 end
 
 --- end on_step callbacks ---

@@ -204,7 +204,24 @@ the default on_hit_object behavior is to disappear.
 
 * `on_punch = ballistics.on_punch_add_velocity`
 
-  when the projectile is punched, add velocity in the direction it was punched, according to how much "damage" was done
+  when the projectile is punched, add velocity in the direction it was punched, according to some scale.
+  scales are specified in properties, e.g.
+  ```lua
+  projectile_properties = {
+      add_velocity = {
+          scale = "constant",
+          offset = 10,
+      },
+      -- alternatively,
+      add_velocity = {
+          scale = "linear",
+          input = "damage",
+          scale = 3,
+          offset = 1,
+      },
+
+  }
+  ```
 
 * `on_punch = ballistics.on_punch_drop_item`
 
@@ -222,3 +239,15 @@ the default on_hit_object behavior is to disappear.
 ### on_step callbacks ###
 
 * `on_step = ballistics.on_step_particles`
+
+  show particles on step. must provide additional parameters in the projectile definition:
+  ```lua
+  projectile_properties = {
+      particles = {
+          -- mostly, a ParticleSpawner definition
+          -- see https://github.com/minetest/minetest/blob/32e492837cbf286aeb91b4b63ecf3c890c71a1bc/doc/lua_api.md?plain=1#L10161-L10254
+          -- do *NOT* specify minpos and maxpos; instead, you can specify _delta_minpos and _delta_maxpos, which
+          -- will be added to the projectile's position
+      },
+  }
+  ```

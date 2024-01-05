@@ -21,8 +21,13 @@ function ballistics.on_activate(self, staticdata)
 		projectile_properties[key] = value
 	end
 	self._projectile_properties = projectile_properties
-	obj:set_velocity(initial_properties.velocity)
-	obj:set_acceleration(initial_properties.acceleration)
+	if initial_properties.velocity then
+		obj:set_velocity(initial_properties.velocity)
+	end
+	if initial_properties.acceleration then
+		obj:set_acceleration(initial_properties.acceleration)
+		self._initial_gravity = initial_properties.acceleration.y
+	end
 
 	self._lifetime = 0
 	self._last_lifetime = 0

@@ -7,7 +7,7 @@ local movement_gravity = tonumber(minetest.settings:get("movement_gravity")) or 
 local acceleration_due_to_gravity = v_new(0, -2 * movement_gravity, 0)
 
 -- may return nil
-function ballistics.shoot(entity_name, pos, vel, acc, source_obj, projectile_properties)
+function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, projectile_properties)
 	local obj = minetest.add_entity(
 		pos,
 		entity_name,
@@ -25,6 +25,7 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, projectile_pro
 		return
 	end
 	ent._source_obj = source_obj
+	ent._target_obj = target_obj
 	return obj
 end
 
@@ -46,4 +47,30 @@ function ballistics.player_shoots(entity_name, player, speed, gravity, projectil
 		player,
 		projectile_properties
 	)
+end
+
+function ballistics.shoot_at(entity_name, source, target, initial_speed, gravity, projectile_properties)
+	local source_pos, source_obj, target_pos, target_obj
+	if vector.check(source) then
+		source_pos = source
+	else
+		source_pos = futil.get_object_center(source)
+		source_obj = source
+	end
+	if vector.check(target) then
+		target_pos = target
+	else
+		target_pos = futil.get_object_center(target)
+		target_obj = target
+	end
+	if not (source_pos and target_pos) then
+		return
+	end
+
+	local vel = ballistics.calculate_initial_velocity(source_pos, target_pos, initial_speed, gravity)
+	if not vel then
+		return
+	end
+
+	return ballistics.shoot(entity_name, source_pos, vel, gravity, source_obj, target_obj, projectile_properties)
 end

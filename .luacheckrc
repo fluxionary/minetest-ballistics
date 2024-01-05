@@ -652,6 +652,8 @@ stds.ballistics = {
 	read_globals = {
 		"fmod",
 		"futil",
+		"areas",
 		"tnt",
+		"worldedit",
 	},
 }
