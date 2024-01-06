@@ -1,22 +1,22 @@
 --- on_activate callbacks ---
 
 function ballistics.on_activate_sound_play(self, staticdata)
-	local pprops = self._parameters.sound
+	local pprops = self._parameters.active_sound
 	local spec = pprops.spec
 	local parameters = table.copy(pprops.parameters or {})
 	parameters.pos = nil
 	parameters.object = self.object
 	parameters.to_player = nil
 	parameters.exclude_player = nil
-	self._sound_handle = minetest.sound_play(spec, parameters)
+	self._active_sound_handle = minetest.sound_play(spec, parameters)
 end
 
 --- end on_activate callbacks ---
 --- on_deactivate callbacks ---
 
 function ballistics.on_deactivate_sound_stop(self, removal)
-	if self._sound_handle then
-		minetest.sound_stop(self._sound_handle)
+	if self._active_sound_handle then
+		minetest.sound_stop(self._active_sound_handle)
 	end
 end
 
@@ -155,8 +155,8 @@ function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity
 end
 
 function ballistics.on_hit_node_sound_stop(self)
-	if self._sound_handle then
-		minetest.sound_stop(self._sound_handle)
+	if self._active_sound_handle then
+		minetest.sound_stop(self._active_sound_handle)
 	end
 end
 
@@ -343,8 +343,8 @@ function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_
 end
 
 function ballistics.on_hit_object_sound_stop(self)
-	if self._sound_handle then
-		minetest.sound_stop(self._sound_handle)
+	if self._active_sound_handle then
+		minetest.sound_stop(self._active_sound_handle)
 	end
 end
 

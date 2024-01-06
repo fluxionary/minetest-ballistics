@@ -119,6 +119,33 @@ note that you aren't necessarily restricted to using a single callback, most of 
     end
 ```
 
+### on_activate_callbacks ###
+
+* `on_activate = ballistics.on_activate_sound_play`
+
+  specify a sound to play when the projectile is created. this is useful for e.g. an arrow "whistling" sound. the sound
+  handle is stored in `self._active_sound_handle`.
+  required parameters:
+  ```lua
+  parameters = {
+      active_sound = {
+          spec = {
+              -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
+              name = "soundname",
+          },
+          parameters = {
+              -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
+          },
+      }
+  }
+  ```
+
+### on_deactivate_callbacks ###
+
+* `on_deactivate = ballistics.on_deactivate_sound_stop`
+
+  if there's an active sound, stop it.
+
 ### on_hit_node callbacks ###
 
 the default on_hit_node behavior is to disappear.
