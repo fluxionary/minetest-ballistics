@@ -1,7 +1,7 @@
 --- on_activate callbacks ---
 
 function ballistics.on_activate_sound_play(self, staticdata)
-	local pprops = self._projectile_properties.sound
+	local pprops = self._parameters.sound
 	local spec = pprops.spec
 	local parameters = table.copy(pprops.parameters or {})
 	parameters.pos = nil
@@ -30,7 +30,11 @@ function ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity,
 		return
 	end
 
-	obj:set_pos(ballistics.get_collision_position(self._last_pos, self._last_velocity, pos, new_velocity))
+	local collision_position =
+		ballistics.estimate_collision_position(self._last_pos, self._last_velocity, pos, new_velocity)
+	if collision_position then
+		obj:set_pos(collision_position)
+	end
 
 	ballistics.freeze(self)
 end
@@ -61,10 +65,10 @@ local function get_adjacent_node(self, node_pos, axis)
 end
 
 function ballistics.on_hit_node_add_entity(self, node_pos, node, axis, old_velocity, new_velocity)
-	local pprops = self._projectile_properties.add_entity
-	assert(pprops, "must define projectile_properties.add_entity in projectile definition")
+	local pprops = self._parameters.add_entity
+	assert(pprops, "must define parameters.add_entity in projectile definition")
 	local entity_name = pprops.entity_name
-	assert(pprops, "must specify projectile_properties.add_entity.entity_name in projectile definition")
+	assert(pprops, "must specify parameters.add_entity.entity_name in projectile definition")
 	local chance = pprops.chance or 1
 	local staticdata = pprops.staticdata
 
@@ -78,7 +82,7 @@ end
 
 if minetest.get_modpath("tnt") then
 	function ballistics.on_hit_node_boom(self, node_pos, node, axis, old_velocity, new_velocity)
-		local boom = self._projectile_properties.boom or {}
+		local boom = self._parameters.boom or {}
 		local def = table.copy(boom)
 		if self._source_obj and minetest.is_player(self._source_obj) then
 			def.owner = self._source_obj:get_player_name()
@@ -89,9 +93,9 @@ if minetest.get_modpath("tnt") then
 	end
 end
 
--- TODO: the ball never stops bouncing and rolls endlessly?
+-- TODO: the ball never stops bouncing and "rolls" endlessly?
 function ballistics.on_hit_node_bounce(self, node_pos, node, axis, old_velocity)
-	local bounce = self._projectile_properties.bounce or {}
+	local bounce = self._parameters.bounce or {}
 	local efficiency = bounce.efficiency or 1
 	local clamp = bounce.clamp or 0
 
@@ -126,11 +130,11 @@ end
 
 -- TODO: allow specifying multiple possible targets, groups
 function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity, new_velocity)
-	local pprops = self._projectile_properties.replace
-	assert(pprops, "must specify projectile_properties.replace in projectile definition")
+	local pprops = self._parameters.replace
+	assert(pprops, "must specify parameters.replace in projectile definition")
 	local target = pprops.target or "air"
 	local replacement = pprops.replacement
-	assert(replacement, "must specify projectile_properties.replace.replacement in projectile definition")
+	assert(replacement, "must specify parameters.replace.replacement in projectile definition")
 	if type(replacement) == "string" then
 		replacement = { name = replacement }
 	end
@@ -225,15 +229,17 @@ local function scale_tool_capabilities(tool_capabilities, scale_speed, velocity)
 end
 
 function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_velocity)
-	local pprops = self._projectile_properties.punch
+	local pprops = self._parameters.punch
 	assert(
 		pprops and pprops.tool_capabilities,
-		"must specify projectile_properties.punch.tool_capabilities in the projectile's definition"
+		"must specify parameters.punch.tool_capabilities in the projectile's definition"
 	)
 	local tool_capabilities = pprops.tool_capabilities
-	local scale_speed = pprops.scale_speed or 20
+	local scale_speed = pprops.scale_speed or self._initial_speed
 	local remove = futil.coalesce(pprops.remove, false)
 	local direction = (target:get_pos() - self._last_pos):normalize()
+	-- TODO: there's a race condition here. a player could launch an arrow at another player and then log out to avoid
+	--       PvP restrictions... but i don't know exactly how to solve that.
 	local puncher
 	if self._source_obj and self._source_obj:get_pos() then
 		puncher = self._source_obj
@@ -253,7 +259,7 @@ function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_ve
 end
 
 function ballistics.on_hit_object_add_entity(self, target, axis, old_velocity, new_velocity)
-	local pprops = self._projectile_properties.add_entity
+	local pprops = self._parameters.add_entity
 	local entity_name = pprops.entity_name
 	local chance = pprops.chance or 1
 	local staticdata = pprops.staticdata
@@ -290,7 +296,7 @@ end
 
 if minetest.get_modpath("tnt") then
 	function ballistics.on_hit_object_boom(self, target, axis, old_velocity, new_velocity)
-		local boom = self._projectile_properties.boom or {}
+		local boom = self._parameters.boom or {}
 		local def = table.copy(boom)
 		if self._source_obj and minetest.is_player(self._source_obj) then
 			def.owner = self._source_obj:get_player_name()
@@ -309,11 +315,11 @@ end
 
 -- TODO: allow specifying multiple possible targets, groups
 function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_velocity)
-	local pprops = self._projectile_properties.replace
-	assert(pprops, "must specify projectile_properties.replace in projectile definition")
+	local pprops = self._parameters.replace
+	assert(pprops, "must specify parameters.replace in projectile definition")
 	local target = pprops.target or "air"
 	local replacement = pprops.replacement
-	assert(replacement, "must specify projectile_properties.replace.replacement in projectile definition")
+	assert(replacement, "must specify parameters.replace.replacement in projectile definition")
 	if type(replacement) == "string" then
 		replacement = { name = replacement }
 	end
@@ -380,14 +386,14 @@ function ballistics.on_punch_add_velocity(self, puncher, time_from_last_punch, t
 	if not velocity then
 		return
 	end
-	local pprops = self._projectile_properties.add_velocity or {}
+	local pprops = self._parameters.add_velocity or {}
 	local scale = add_velocity_scale[pprops.scale or "constant"](pprops, damage)
 	obj:add_velocity(dir * scale)
 end
 
 function ballistics.on_punch_drop_item(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
-	local pprops = self._projectile_properties.drop_item
-	assert(pprops and pprops.item, "must specify projectile_properties.drop_item.item in projectile definition")
+	local pprops = self._parameters.drop_item
+	assert(pprops and pprops.item, "must specify parameters.drop_item.item in projectile definition")
 	local item = pprops.item
 	local chance = pprops.chance or 1
 	local obj = self.object
@@ -416,8 +422,8 @@ function ballistics.on_step_particles(self, dtime, moveresult)
 		return
 	end
 
-	local pprops = self._projectile_properties.particles
-	assert(pprops, "must specify projectile_properties.particles in projectile definition (a particlespawner)")
+	local pprops = self._parameters.particles
+	assert(pprops, "must specify parameters.particles in projectile definition (a particlespawner)")
 
 	if pprops._period then
 		local elapsed = (self._particles_elapsed or 0) + dtime
@@ -456,15 +462,17 @@ function ballistics.on_step_seek_target(self, dtime, moveresult)
 	local current_vel = obj:get_velocity()
 	local current_acc = obj:get_acceleration()
 
+	-- TODO: track the target's estimated position when we collide
 	-- i'm not entirely sure why the target and source need to be switched?
+	-- this also doesn't work quite how i expect it to, i may need to go back a step or estimate the next step
 	local delta = ballistics.calculate_initial_velocity(target_pos, our_pos, current_vel:length(), current_acc.y)
 	if not delta then
 		return
 	end
 
-	local pprops = self._projectile_properties.seek_target or {}
-	local seek_velocity = pprops.seek_velocity or 1
-	local new_vel = (current_vel + (delta:normalize() * seek_velocity)):normalize() * current_vel:length()
+	local pprops = self._parameters.seek_target or {}
+	local seek_speed = pprops.seek_speed or 1
+	local new_vel = (current_vel + (delta:normalize() * seek_speed)):normalize() * current_vel:length()
 	obj:set_velocity(new_vel)
 end
 

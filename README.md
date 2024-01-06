@@ -1,5 +1,6 @@
 # ballistics
 
-api for projectiles
+an api for projectiles. see API.md for details.
 
-doesn't work yet.
+the goal is to make use of minetest's built-in collision detection to do the heavy lifting, to avoid having to do a
+bunch of raycasts, which may not be accurate if there is a lot of lag.

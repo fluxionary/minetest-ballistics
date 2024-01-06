@@ -7,7 +7,7 @@ ballistics.register_projectile("ballistics:test_ball", {
 
 	drag_coefficient = 0.1,
 
-	projectile_properties = {
+	parameters = {
 		bounce = {
 			efficiency = 0.6,
 			clamp = 0.1,

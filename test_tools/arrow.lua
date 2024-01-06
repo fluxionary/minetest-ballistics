@@ -8,7 +8,7 @@ ballistics.register_projectile("ballistics:test_arrow", {
 
 	drag_coefficient = 0.1,
 
-	projectile_properties = {
+	parameters = {
 		particles = {
 			amount = 1,
 			time = 0.1,

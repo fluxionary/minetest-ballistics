@@ -44,11 +44,13 @@ function ballistics.calculate_initial_velocity(source_pos, target_pos, initial_s
 	)
 end
 
--- because objects keep moving after colliding, use geometry to figure our approximate location of the actual collision
--- we assume the collision point is closest to the last recorded vector of motion, and the current one
+-- because objects keep moving after colliding, use geometry to figure our approximate location of the actual collision.
+-- we assume the collision point is closest to the last recorded vector of motion, and the current one.
 -- https://palitri.com/vault/stuff/maths/Rays%20closest%20point.pdf
-local threshold = 0.0001
-function ballistics.get_collision_position(last_pos, last_vel, cur_pos, cur_vel)
+-- engine issue to make this moot:
+-- https://github.com/minetest/minetest/issues/9966
+local threshold = 0.0001 -- if certain values are too close to 0, the results will not be good
+function ballistics.estimate_collision_position(last_pos, last_vel, cur_pos, cur_vel)
 	local a = cur_vel
 	local b = last_vel
 	local a2 = a:dot(a)

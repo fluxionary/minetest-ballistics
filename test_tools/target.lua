@@ -26,12 +26,6 @@ ballistics.register_projectile("ballistics:test_target", {
 
 	drag_coefficient = 0.0,
 
-	projectile_properties = {
-		seek_target = {
-			seek_velocity = 5,
-		},
-	},
-
 	on_step = ballistics.on_step_seek_target,
 
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
@@ -99,7 +93,11 @@ minetest.register_chatcommand("ballistics_target_me", {
 
 		speed = tonumber(speed) or 30
 
-		local obj = ballistics.shoot_at("ballistics:test_target", source, player, speed)
+		local obj = ballistics.shoot_at("ballistics:test_target", source, player, speed, nil, {
+			seek_target = {
+				seek_speed = 5,
+			},
+		})
 		if not obj then
 			return true, S("you are too far from the source for a projectile @@@1 n/s", tostring(speed))
 		end

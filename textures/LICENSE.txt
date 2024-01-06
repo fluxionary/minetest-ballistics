@@ -1,4 +1,4 @@
-* (C) 2013 Diego Martínez BSD 2 clause https://github.com/kaeza/minetest-soccer.git
+* (C) 2013 Diego Martínez BSD 2 clause https://github.com/kaeza/minetest-soccer
  * ballistics_ball.png
 * (C) BlockMen CC BY-SA 3.0 https://github.com/minetest/minetest_game/
  * ballistics_test_tool.png

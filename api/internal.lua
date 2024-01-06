@@ -14,25 +14,29 @@ function ballistics.on_activate(self, staticdata)
 		return
 	end
 
+	self._lifetime = 0
+	self._last_lifetime = 0
+	self._last_pos = obj:get_pos()
+
 	local initial_properties = deserialize(staticdata)
 
-	local projectile_properties = table.copy(self._projectile_properties or {})
-	for key, value in pairs(initial_properties.projectile_properties or {}) do
-		projectile_properties[key] = value
-	end
-	self._projectile_properties = projectile_properties
+	local parameters = initial_properties.parameters or {}
+	setmetatable(parameters, { __index = self._parameters })
+	self._parameters = parameters
 	if initial_properties.velocity then
 		obj:set_velocity(initial_properties.velocity)
+		self._initial_speed = initial_properties.velocity:length()
+		self._last_velocity = vector.copy(initial_properties.velocity)
+	else
+		self._initial_speed = 0
+		self._last_velocity = vector.zero()
 	end
 	if initial_properties.acceleration then
 		obj:set_acceleration(initial_properties.acceleration)
 		self._initial_gravity = initial_properties.acceleration.y
+	else
+		self._initial_gravity = 0
 	end
-
-	self._lifetime = 0
-	self._last_lifetime = 0
-	self._last_pos = obj:get_pos()
-	self._last_velocity = vector.copy(initial_properties.velocity)
 
 	if self._immortal then
 		self.object:set_armor_groups({ immortal = 1 })
