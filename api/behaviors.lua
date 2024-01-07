@@ -1,7 +1,10 @@
 --- on_activate callbacks ---
 
-function ballistics.on_activate_sound_play(self, staticdata)
+function ballistics.on_activate_active_sound_play(self, staticdata)
 	local pprops = self._parameters.active_sound
+	if not (pprops and pprops.spec and pprops.spec.name) then
+		error("most specify parameters.active_sound.spec.name in projectile definition")
+	end
 	local spec = pprops.spec
 	local parameters = table.copy(pprops.parameters or {})
 	parameters.pos = nil
@@ -14,7 +17,7 @@ end
 --- end on_activate callbacks ---
 --- on_deactivate callbacks ---
 
-function ballistics.on_deactivate_sound_stop(self, removal)
+function ballistics.on_deactivate_active_sound_stop(self, removal)
 	if self._active_sound_handle then
 		minetest.sound_stop(self._active_sound_handle)
 	end
@@ -154,10 +157,28 @@ function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity
 	return true
 end
 
-function ballistics.on_hit_node_sound_stop(self)
+function ballistics.on_hit_node_active_sound_stop(self)
 	if self._active_sound_handle then
 		minetest.sound_stop(self._active_sound_handle)
 	end
+end
+
+function ballistics.on_hit_node_hit_sound_play(self)
+	local pos = self.object:get_pos() or self._last_pos
+	if not pos then
+		return
+	end
+	local pprops = self._parameters.hit_sound
+	if not (pprops and pprops.spec and pprops.spec.name) then
+		error("most specify parameters.hit_sound.spec.name in projectile definition")
+	end
+	local spec = pprops.spec
+	local parameters = table.copy(pprops.parameters or {})
+	parameters.pos = pos
+	parameters.loop = nil
+	parameters.to_player = nil
+	parameters.exclude_player = nil
+	minetest.sound_play(spec, parameters, true)
 end
 
 --- end on_hit_node callbacks ---
@@ -240,6 +261,7 @@ function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_ve
 	local direction = (target:get_pos() - self._last_pos):normalize()
 	-- TODO: there's a race condition here. a player could launch an arrow at another player and then log out to avoid
 	--       PvP restrictions... but i don't know exactly how to solve that.
+	-- TODO: perhaps record whether the source_obj was a player, and cancel damage if they're disconnected
 	local puncher
 	if self._source_obj and self._source_obj:get_pos() then
 		puncher = self._source_obj
@@ -342,10 +364,28 @@ function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_
 	return true
 end
 
-function ballistics.on_hit_object_sound_stop(self)
+function ballistics.on_hit_object_active_sound_stop(self)
 	if self._active_sound_handle then
 		minetest.sound_stop(self._active_sound_handle)
 	end
+end
+
+function ballistics.on_hit_object_hit_sound_play(self)
+	local pos = self.object:get_pos() or self._last_pos
+	if not pos then
+		return
+	end
+	local pprops = self._parameters.hit_sound
+	if not (pprops and pprops.spec and pprops.spec.name) then
+		error("most specify parameters.hit_sound.spec.name in projectile definition")
+	end
+	local spec = pprops.spec
+	local parameters = table.copy(pprops.parameters or {})
+	parameters.pos = pos
+	parameters.loop = nil
+	parameters.to_player = nil
+	parameters.exclude_player = nil
+	minetest.sound_play(spec, parameters, true)
 end
 
 --- end on_hit_object callbacks ---

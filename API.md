@@ -110,18 +110,18 @@ ballistics.register_projectile("mymod:myarrow", {
 
 ## pre-defined callbacks ##
 
-note that you aren't necessarily restricted to using a single callback, most of these can easily be used together, e.g.
+note that you aren't restricted to using a single callback, most of these can easily be used together, e.g.
 
 ```lua
     on_hit_node = function(self, pos, node, collision_axis, old_velocity, new_velocity)
         ballistics.on_hit_node_freeze(self, pos, node, collision_axis, old_velocity, new_velocity)
-        ballistics.on_hit_node_sound_stop(self, pos, node, collision_axis, old_velocity, new_velocity)
+        ballistics.on_hit_node_active_sound_stop(self, pos, node, collision_axis, old_velocity, new_velocity)
     end
 ```
 
 ### on_activate_callbacks ###
 
-* `on_activate = ballistics.on_activate_sound_play`
+* `on_activate = ballistics.on_activate_active_sound_play`
 
   specify a sound to play when the projectile is created. this is useful for e.g. an arrow "whistling" sound. the sound
   handle is stored in `self._active_sound_handle`.
@@ -142,7 +142,7 @@ note that you aren't necessarily restricted to using a single callback, most of 
 
 ### on_deactivate_callbacks ###
 
-* `on_deactivate = ballistics.on_deactivate_sound_stop`
+* `on_deactivate = ballistics.on_deactivate_active_sound_stop`
 
   if there's an active sound, stop it.
 
@@ -203,9 +203,26 @@ the default on_hit_node behavior is to disappear.
   }
   ```
 
-* `on_hit_node = ballistics.on_hit_node_sound_stop`
+* `on_hit_node = ballistics.on_hit_node_active_sound_stop`
 
   if the projectile has a sound handle associated with it, stop the sound when it hits a node.
+
+* `on_hit_node = ballistics.on_hit_node_hit_sound_play`
+
+  play a sound when you hit a node. a SimpleSoundSpec must be provided, a sound parameters table is optional:
+  ```lua
+  parameters = {
+      hit_sound = {
+          spec = {
+              -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
+              name = "soundname",
+          },
+          parameters = {
+              -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
+          },
+      }
+  }
+  ```
 
 ### on_hit_object callbacks ###
 
@@ -276,9 +293,26 @@ the default on_hit_object behavior is to disappear.
   }
   ```
 
-* `on_hit_object = ballistics.on_hit_object_sound_stop`
+* `on_hit_object = ballistics.on_hit_object_active_sound_stop`
 
   on hitting an object, if a sound handle is associated with the projectile, make it stop.
+
+* `on_hit_object = ballistics.on_hit_object_hit_sound_play`
+
+  play a sound when you hit an object. a SimpleSoundSpec must be provided, a sound parameters table is optional:
+  ```lua
+  parameters = {
+      hit_sound = {
+          spec = {
+              -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
+              name = "soundname",
+          },
+          parameters = {
+              -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
+          },
+      }
+  }
+  ```
 
 ### on_punch callbacks ###
 

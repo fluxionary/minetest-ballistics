@@ -30,7 +30,7 @@ ballistics.register_projectile("ballistics:test_arrow", {
 			maxsize = 2,
 			_period = 0.09,
 		},
-		sound = {
+		active_sound = {
 			spec = {
 				name = "ballistics_wind",
 			},
@@ -43,14 +43,14 @@ ballistics.register_projectile("ballistics:test_arrow", {
 		},
 	},
 
-	on_activate = ballistics.on_activate_sound_play,
-	on_deactivate = ballistics.on_deactivate_sound_stop,
+	on_activate = ballistics.on_activate_active_sound_play,
+	on_deactivate = ballistics.on_deactivate_active_sound_stop,
 	on_step = ballistics.on_step_particles,
 
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
 		ballistics.chat_send_all("hit @1 @@ @2", node.name, minetest.pos_to_string(pos))
 		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)
-		ballistics.on_hit_node_sound_stop(self)
+		ballistics.on_hit_node_active_sound_stop(self)
 		minetest.after(15, function()
 			if self.object then
 				self.object:remove()
@@ -73,7 +73,7 @@ ballistics.register_projectile("ballistics:test_arrow", {
 			minetest.pos_to_string(futil.vector.round(object:get_pos(), 0.01))
 		)
 		ballistics.on_hit_object_stick(self, object, axis, old_velocity, new_velocity)
-		ballistics.on_hit_object_sound_stop(self)
+		ballistics.on_hit_object_active_sound_stop(self)
 		minetest.after(15, function()
 			if self.object then
 				self.object:remove()
