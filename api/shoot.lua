@@ -39,12 +39,14 @@ function ballistics.player_shoots(entity_name, player, speed, gravity, parameter
 	local eye_offset = player:get_eye_offset() * 0.1
 	local yaw = player:get_look_horizontal()
 	local start = player:get_pos() + eye_height + v_rotate_around_axis(eye_offset, { x = 0, y = 1, z = 0 }, yaw)
+
 	return ballistics.shoot(
 		entity_name,
 		start,
 		(look * speed) + futil.get_velocity(player),
 		v_new(0, -2 * (gravity or movement_gravity), 0),
 		player,
+		nil,
 		parameters
 	)
 end
