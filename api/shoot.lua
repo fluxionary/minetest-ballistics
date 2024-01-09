@@ -25,6 +25,9 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, pa
 		return
 	end
 	ent._source_obj = source_obj
+	if minetest.is_player(source_obj) then
+		ent._source_player_name = source_obj:get_player_name()
+	end
 	ent._target_obj = target_obj
 	return obj
 end

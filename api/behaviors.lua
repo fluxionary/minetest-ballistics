@@ -259,21 +259,25 @@ function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_ve
 	local scale_speed = pprops.scale_speed or self._initial_speed
 	local remove = futil.coalesce(pprops.remove, false)
 	local direction = (target:get_pos() - self._last_pos):normalize()
-	-- TODO: there's a race condition here. a player could launch an arrow at another player and then log out to avoid
-	--       PvP restrictions... but i don't know exactly how to solve that.
-	-- TODO: perhaps record whether the source_obj was a player, and cancel damage if they're disconnected
 	local puncher
-	if self._source_obj and self._source_obj:get_pos() then
+	if self._source_player_name then
+		-- so that if the player disconnects, they can't be responsible for damage
+		puncher = minetest.get_player_by_name(self._source_player_name)
+	elseif self._source_obj and self._source_obj:get_pos() then
 		puncher = self._source_obj
 	else
 		puncher = self.object
 	end
-	target:punch(
-		puncher,
-		tool_capabilities.full_punch_interval or math.huge,
-		scale_tool_capabilities(tool_capabilities, scale_speed, old_velocity),
-		direction
-	)
+
+	if puncher then
+		target:punch(
+			puncher,
+			tool_capabilities.full_punch_interval or math.huge,
+			scale_tool_capabilities(tool_capabilities, scale_speed, old_velocity),
+			direction
+		)
+	end
+
 	if remove then
 		self.object:remove()
 		return true
