@@ -6,9 +6,10 @@ ballistics.register_projectile("ballistics:test_arrow", {
 	collisionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2 },
 	selectionbox = { -0.05, -0.05, -0.2, 0.05, 0.05, 0.2, rotate = true },
 
-	drag_coefficient = 0.1,
-
 	parameters = {
+		drag = {
+			coefficient = 0.1,
+		},
 		particles = {
 			amount = 1,
 			time = 0.1,
@@ -45,12 +46,15 @@ ballistics.register_projectile("ballistics:test_arrow", {
 
 	on_activate = ballistics.on_activate_active_sound_play,
 	on_deactivate = ballistics.on_deactivate_active_sound_stop,
-	on_step = ballistics.on_step_particles,
+	on_step = function(...)
+		ballistics.on_step_apply_drag(...)
+		ballistics.on_step_particles(...)
+	end,
 
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
 		ballistics.chat_send_all("hit @1 @@ @2", node.name, minetest.pos_to_string(pos))
 		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)
-		ballistics.on_hit_node_active_sound_stop(self)
+		ballistics.on_hit_node_active_sound_stop(self, pos, node, axis, old_velocity, new_velocity)
 		minetest.after(15, function()
 			if self.object then
 				self.object:remove()

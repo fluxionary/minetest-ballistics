@@ -32,17 +32,19 @@ minetest.register_on_mods_loaded(function()
 	end
 end)
 
-function ballistics.apply_drag(self)
+function ballistics.apply_drag(self, drag_coefficient)
+	if drag_coefficient == 0 then
+		return
+	end
+	if self._frozen then
+		return
+	end
 	local obj = self.object
 	if not obj then
 		return
 	end
 	local pos = obj:get_pos()
 	if not pos then
-		return
-	end
-	local drag_coefficient = self._drag_coefficient
-	if drag_coefficient == 0 then
 		return
 	end
 

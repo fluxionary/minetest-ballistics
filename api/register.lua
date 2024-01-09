@@ -26,7 +26,6 @@ function ballistics.register_projectile(name, def)
 			show_on_minimap = def.show_on_minimap,
 		},
 
-		_drag_coefficient = def.drag_coefficient or 0,
 		_immortal = futil.coalesce(def.immortal, true),
 		_is_arrow = futil.coalesce(def.is_arrow, false),
 		_update_period = def.update_period,

@@ -516,4 +516,10 @@ function ballistics.on_step_seek_target(self, dtime, moveresult)
 	obj:set_velocity(new_vel)
 end
 
+function ballistics.on_step_apply_drag(self, dtime, moveresult)
+	local pprops = self._parameters.particles
+	assert(pprops and pprops.coefficient, "must specify parameters.drag.coefficient in projectile definition")
+	ballistics.apply_drag(self, pprops.coefficient)
+end
+
 --- end on_step callbacks ---

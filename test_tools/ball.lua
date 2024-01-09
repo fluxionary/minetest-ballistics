@@ -5,14 +5,17 @@ ballistics.register_projectile("ballistics:test_ball", {
 	collisionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2 },
 	selectionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2, rotate = true },
 
-	drag_coefficient = 0.1,
-
 	parameters = {
+		drag = {
+			coefficient = 0.1,
+		},
 		bounce = {
 			efficiency = 0.6,
 			clamp = 0.1,
 		},
 	},
+
+	on_step = ballistics.on_step_apply_drag,
 
 	on_hit_node = ballistics.on_hit_node_bounce,
 

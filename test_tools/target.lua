@@ -24,8 +24,6 @@ ballistics.register_projectile("ballistics:test_target", {
 	collisionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2 },
 	selectionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2, rotate = true },
 
-	drag_coefficient = 0.0,
-
 	on_step = ballistics.on_step_seek_target,
 
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)

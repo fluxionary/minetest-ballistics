@@ -88,8 +88,6 @@ function ballistics.on_step(self, dtime, moveresult)
 		if self._is_arrow then
 			ballistics.adjust_pitch(self, dtime, self._update_period)
 		end
-
-		ballistics.apply_drag(self)
 	end
 
 	self._last_lifetime = self._lifetime
