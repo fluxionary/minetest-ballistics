@@ -444,7 +444,7 @@ function ballistics.on_punch_drop_item(self, puncher, time_from_last_punch, tool
 	if math.random(chance) == 1 then
 		minetest.add_item(obj:get_pos(), item)
 	end
-	self.obj:remove()
+	obj:remove()
 	return true
 end
 
