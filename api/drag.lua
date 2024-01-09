@@ -56,7 +56,7 @@ function ballistics.apply_drag(self, drag_coefficient)
 	if speed == 0 then
 		return
 	end
-	local acceleration = 0.5 * rho * (speed * speed) * self._drag_coefficient
+	local acceleration = 0.5 * rho * (speed * speed) * drag_coefficient
 	local delta_v = acceleration * (self._lifetime - self._last_lifetime)
 	delta_v = math.min(speed, delta_v) -- don't go backwards due to lag or something...
 	local delta_velocity = velocity * (-delta_v / speed)

@@ -23,6 +23,7 @@ function ballistics.on_activate(self, staticdata)
 	local parameters = initial_properties.parameters or {}
 	setmetatable(parameters, { __index = self._parameters })
 	self._parameters = parameters
+
 	if initial_properties.velocity then
 		local velocity = vector.copy(initial_properties.velocity)
 		obj:set_velocity(velocity)
