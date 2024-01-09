@@ -24,9 +24,10 @@ function ballistics.on_activate(self, staticdata)
 	setmetatable(parameters, { __index = self._parameters })
 	self._parameters = parameters
 	if initial_properties.velocity then
-		obj:set_velocity(initial_properties.velocity)
-		self._initial_speed = initial_properties.velocity:length()
-		self._last_velocity = vector.copy(initial_properties.velocity)
+		local velocity = vector.copy(initial_properties.velocity)
+		obj:set_velocity(velocity)
+		self._initial_speed = velocity:length()
+		self._last_velocity = vector.copy(velocity)
 	else
 		self._initial_speed = 0
 		self._last_velocity = vector.zero()
