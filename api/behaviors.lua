@@ -398,12 +398,16 @@ function ballistics.on_hit_object_drop_item(self)
 	local item = pprops.item
 	local chance = pprops.chance or 1
 	local obj = self.object
+	local pos = obj:get_pos()
+	if not pos then
+		return
+	end
 	if obj:get_velocity():length() > 0.001 then
 		-- only drop as an item if not moving
 		return
 	end
 	if math.random(chance) == 1 then
-		minetest.add_item(obj:get_pos(), item)
+		minetest.add_item(pos, item)
 	end
 	obj:remove()
 	return true
