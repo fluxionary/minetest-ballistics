@@ -7,7 +7,7 @@ local movement_gravity = tonumber(minetest.settings:get("movement_gravity")) or 
 local acceleration_due_to_gravity = v_new(0, -2 * movement_gravity, 0)
 
 -- may return nil
-function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, parameters)
+function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, parameters, properties)
 	local obj = minetest.add_entity(
 		pos,
 		entity_name,
@@ -24,6 +24,9 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, pa
 	if not ent then
 		return
 	end
+	if properties then
+		obj:set_properties(properties)
+	end
 	ent._source_obj = source_obj
 	if minetest.is_player(source_obj) then
 		ent._source_player_name = source_obj:get_player_name()
@@ -32,7 +35,7 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, pa
 	return obj
 end
 
-function ballistics.player_shoots(entity_name, player, speed, gravity, parameters)
+function ballistics.player_shoots(entity_name, player, speed, gravity, parameters, properties)
 	if not futil.is_player(player) then
 		-- TODO: figure out fake player compatibility
 		return
@@ -50,11 +53,12 @@ function ballistics.player_shoots(entity_name, player, speed, gravity, parameter
 		v_new(0, -2 * (gravity or movement_gravity), 0),
 		player,
 		nil,
-		parameters
+		parameters,
+		properties
 	)
 end
 
-function ballistics.shoot_at(entity_name, source, target, initial_speed, gravity, parameters)
+function ballistics.shoot_at(entity_name, source, target, initial_speed, gravity, parameters, properties)
 	local source_pos, source_obj, target_pos, target_obj
 	if vector.check(source) then
 		source_pos = source
@@ -77,5 +81,5 @@ function ballistics.shoot_at(entity_name, source, target, initial_speed, gravity
 		return
 	end
 
-	return ballistics.shoot(entity_name, source_pos, vel, gravity, source_obj, target_obj, parameters)
+	return ballistics.shoot(entity_name, source_pos, vel, gravity, source_obj, target_obj, parameters, properties)
 end

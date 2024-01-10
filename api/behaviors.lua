@@ -392,6 +392,23 @@ function ballistics.on_hit_object_hit_sound_play(self)
 	minetest.sound_play(spec, parameters, true)
 end
 
+function ballistics.on_hit_object_drop_item(self)
+	local pprops = self._parameters.drop_item
+	assert(pprops and pprops.item, "must specify parameters.drop_item.item in projectile definition")
+	local item = pprops.item
+	local chance = pprops.chance or 1
+	local obj = self.object
+	if obj:get_velocity():length() > 0.001 then
+		-- only drop as an item if not moving
+		return
+	end
+	if math.random(chance) == 1 then
+		minetest.add_item(obj:get_pos(), item)
+	end
+	obj:remove()
+	return true
+end
+
 --- end on_hit_object callbacks ---
 --- on_punch callbacks ---
 
