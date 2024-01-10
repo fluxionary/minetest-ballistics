@@ -181,6 +181,10 @@ function ballistics.on_hit_node_hit_sound_play(self)
 	minetest.sound_play(spec, parameters, true)
 end
 
+function ballistics.on_hit_node_become_non_physical(self)
+	self.object:set_properties({ physical = false })
+end
+
 --- end on_hit_node callbacks ---
 --- on_hit_object callbacks ---
 
@@ -411,6 +415,10 @@ function ballistics.on_hit_object_drop_item(self)
 	end
 	obj:remove()
 	return true
+end
+
+function ballistics.on_hit_object_become_non_physical(self)
+	self.object:set_properties({ physical = false })
 end
 
 --- end on_hit_object callbacks ---
