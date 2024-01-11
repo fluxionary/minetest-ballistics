@@ -170,7 +170,7 @@ local function replace(self, pos0)
 			end
 		end
 	end
-	if placed then
+	if placed and futil.coalesce(pprops.remove_on_success, true) then
 		self.object:remove()
 		return true
 	end
