@@ -354,10 +354,11 @@ function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_
 		replacement = { name = replacement }
 	end
 	local radius = pprops.radius or 0
-	local pos0 = object:get_pos():round()
+	local pos0 = object:get_pos() or self.object:get_pos()
 	if not pos0 then
 		return
 	end
+	pos0 = pos0:round()
 	for x = -radius, radius do
 		for y = -radius, radius do
 			for z = -radius, radius do
