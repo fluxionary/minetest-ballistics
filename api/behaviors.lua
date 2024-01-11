@@ -131,8 +131,7 @@ function ballistics.on_hit_node_dig(self, node_pos, node, axis, old_velocity, ne
 	return true
 end
 
--- TODO: allow specifying multiple possible targets, groups
-function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity, new_velocity)
+local function replace(self, pos0)
 	local pprops = self._parameters.replace
 	assert(pprops, "must specify parameters.replace in projectile definition")
 	local target = pprops.target or "air"
@@ -142,19 +141,44 @@ function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity
 		replacement = { name = replacement }
 	end
 	local radius = pprops.radius or 0
-	local pos0 = get_adjacent_node(self, node_pos, axis)
+	pos0 = pos0:round()
+	local placer
+	if minetest.is_player(self._source_obj) then
+		placer = self._source_obj
+	end
+	local placed = false
 	for x = -radius, radius do
 		for y = -radius, radius do
 			for z = -radius, radius do
 				local pos = pos0:offset(x, y, z)
 				if minetest.get_node(pos).name == target then
-					minetest.set_node(pos, replacement)
+					if placer then
+						local itemstack = ItemStack(replacement.name)
+						local pointed_thing = { type = "node", under = pos, above = pos }
+						local param2 = replacement.param2
+						-- second argument is placed position or nil
+						if select(2, minetest.item_place_node(itemstack, placer, pointed_thing, param2)) then
+							placed = true
+						end
+					else
+						if minetest.place_node(pos, replacement) then
+							placed = true
+						end
+					end
 				end
 			end
 		end
 	end
-	self.object:remove()
-	return true
+	if placed then
+		self.object:remove()
+		return true
+	end
+end
+
+-- TODO: allow specifying multiple possible targets, groups
+function ballistics.on_hit_node_replace(self, node_pos, node, axis, old_velocity, new_velocity)
+	local pos0 = get_adjacent_node(self, node_pos, axis)
+	return replace(self, pos0)
 end
 
 function ballistics.on_hit_node_active_sound_stop(self)
@@ -269,7 +293,7 @@ function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_ve
 		puncher = minetest.get_player_by_name(self._source_player_name)
 	elseif self._source_obj and self._source_obj:get_pos() then
 		puncher = self._source_obj
-	else
+	elseif self.object:get_pos() then
 		puncher = self.object
 	end
 
@@ -345,32 +369,11 @@ end
 
 -- TODO: allow specifying multiple possible targets, groups
 function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_velocity)
-	local pprops = self._parameters.replace
-	assert(pprops, "must specify parameters.replace in projectile definition")
-	local target = pprops.target or "air"
-	local replacement = pprops.replacement
-	assert(replacement, "must specify parameters.replace.replacement in projectile definition")
-	if type(replacement) == "string" then
-		replacement = { name = replacement }
-	end
-	local radius = pprops.radius or 0
 	local pos0 = object:get_pos() or self.object:get_pos()
 	if not pos0 then
 		return
 	end
-	pos0 = pos0:round()
-	for x = -radius, radius do
-		for y = -radius, radius do
-			for z = -radius, radius do
-				local pos = pos0:offset(x, y, z)
-				if minetest.get_node(pos).name == target then
-					minetest.set_node(pos, replacement)
-				end
-			end
-		end
-	end
-	self.object:remove()
-	return true
+	return replace(self, pos0)
 end
 
 function ballistics.on_hit_object_active_sound_stop(self)
