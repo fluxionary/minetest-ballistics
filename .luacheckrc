@@ -416,6 +416,7 @@ stds.minetest = {
 				is_yes = {},
 				item_drop = {},
 				item_eat = {},
+				item_pickup = {},
 				item_place = {},
 				item_place_node = {},
 				item_place_object = {},
