@@ -17,11 +17,14 @@ function ballistics.on_activate(self, staticdata)
 	self._lifetime = 0
 	self._last_lifetime = 0
 	self._last_pos = obj:get_pos()
+	self._first_step = true
 
 	local initial_properties = deserialize(staticdata)
 
-	local parameters = initial_properties.parameters or {}
-	setmetatable(parameters, { __index = self._parameters })
+	local parameters = table.copy(self._parameters)
+	if initial_properties.parameters then
+		futil.table.set_all(parameters, initial_properties.parameters)
+	end
 	self._parameters = parameters
 
 	if initial_properties.velocity then
@@ -60,13 +63,23 @@ function ballistics.on_step(self, dtime, moveresult)
 	if not pos then
 		return
 	end
+
 	local vel = obj:get_velocity()
 
 	self._lifetime = (self._lifetime or 0) + dtime
 
 	local done = false -- whether to stop processing early
-	if self._on_step and self._on_step(self, dtime, moveresult) then
-		done = true
+
+	if self._first_step then
+		if self._collide_with_objects then
+			obj:set_properties({ collide_with_objects = true })
+			-- TODO: check for collisions with entities on first step? tricky tho
+		end
+		self._first_step = nil
+	end
+
+	if self._on_step then
+		done = self._on_step(self, dtime, moveresult)
 	end
 
 	if moveresult and not done then
@@ -109,41 +122,33 @@ function ballistics.handle_collision(self, collision, touching_ground, collides,
 				return true
 			end
 
-			if
-				self._on_hit_node(
-					self,
-					pos,
-					node,
-					collision.axis,
-					collision.old_velocity,
-					collision.new_velocity,
-					touching_ground,
-					collides,
-					standing_on_object
-				)
-			then
-				return true
-			end
+			return self._on_hit_node(
+				self,
+				pos,
+				node,
+				collision.axis,
+				collision.old_velocity,
+				collision.new_velocity,
+				touching_ground,
+				collides,
+				standing_on_object
+			)
 		else
 			self.object:remove()
 			return true
 		end
 	elseif collision.type == "object" then
 		if self._on_hit_object then
-			if
-				self._on_hit_object(
-					self,
-					collision.object,
-					collision.axis,
-					collision.old_velocity,
-					collision.new_velocity,
-					touching_ground,
-					collides,
-					standing_on_object
-				)
-			then
-				return true
-			end
+			return self._on_hit_object(
+				self,
+				collision.object,
+				collision.axis,
+				collision.old_velocity,
+				collision.new_velocity,
+				touching_ground,
+				collides,
+				standing_on_object
+			)
 		else
 			self.object:remove()
 			return true

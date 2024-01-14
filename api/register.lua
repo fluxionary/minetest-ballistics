@@ -2,10 +2,11 @@ function ballistics.register_projectile(name, def)
 	minetest.register_entity(name, {
 		initial_properties = {
 			physical = true,
+			-- collide_with_objects will be set to true *AFTER* the first step, to prevent collisions with the source
+			collide_with_objects = false,
 			static_save = false,
 
 			hp_max = def.hp_max or 1,
-			collide_with_objects = futil.coalesce(def.collide_with_objects, true),
 			pointable = futil.coalesce(def.pointable, true),
 			is_visible = futil.coalesce(def.is_visible, true),
 
@@ -28,6 +29,7 @@ function ballistics.register_projectile(name, def)
 
 		_immortal = futil.coalesce(def.immortal, true),
 		_is_arrow = futil.coalesce(def.is_arrow, false),
+		_collide_with_objects = futil.coalesce(def.collide_with_objects, true),
 		_update_period = def.update_period,
 
 		_on_hit_node = def.on_hit_node,
