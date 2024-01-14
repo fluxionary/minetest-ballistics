@@ -20,6 +20,7 @@ end
 function ballistics.on_deactivate_active_sound_stop(self, removal)
 	if self._active_sound_handle then
 		minetest.sound_stop(self._active_sound_handle)
+		self._active_sound_handle = nil
 	end
 end
 
@@ -185,6 +186,7 @@ end
 function ballistics.on_hit_node_active_sound_stop(self)
 	if self._active_sound_handle then
 		minetest.sound_stop(self._active_sound_handle)
+		self._active_sound_handle = nil
 	end
 end
 
@@ -380,6 +382,7 @@ end
 function ballistics.on_hit_object_active_sound_stop(self)
 	if self._active_sound_handle then
 		minetest.sound_stop(self._active_sound_handle)
+		self._active_sound_handle = nil
 	end
 end
 
