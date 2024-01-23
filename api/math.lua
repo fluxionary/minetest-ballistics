@@ -50,7 +50,7 @@ end
 -- engine issue to make this moot:
 -- https://github.com/minetest/minetest/issues/9966
 local threshold = 0.0001 -- if certain values are too close to 0, the results will not be good
-function ballistics.estimate_collision_position(last_pos, last_vel, cur_pos, cur_vel)
+function ballistics.closest_point_to_two_lines(last_pos, last_vel, cur_pos, cur_vel)
 	local a = cur_vel
 	local b = last_vel
 	local a2 = a:dot(a)
@@ -78,13 +78,17 @@ end
 
 -- https://en.wikipedia.org/wiki/Midpoint_method
 -- https://indico.cern.ch/event/831093/attachments/1896309/3218515/ub_py410_odes.pdf (page 9)
-function ballistics.path_cast_midpoint(start_pos, start_vel, stop_after, gravity, drag, dt, objects, liquids, debug_f)
-	stop_after = stop_after or 10
-	gravity = gravity or movement_gravity
-	drag = drag or 0
-	dt = dt or 0.09
-	objects = futil.coalesce(objects, true)
-	liquids = futil.coalesce(liquids, true)
+function ballistics.ballistic_cast(def)
+	-- start_pos, start_vel, stop_after, gravity, drag, dt, objects, liquids, on_step
+	local pos = assert(def.pos, "must specify a starting position")
+	local vel = assert(def.vel, "must specify a starting velocity")
+	local stop_after = def.stop_after or 10
+	local gravity = def.gravity or movement_gravity
+	local drag = def.drag or 0
+	local dt = def.dt or 0.01
+	local objects = futil.coalesce(def.objects, true)
+	local liquids = futil.coalesce(def.liquids, true)
+	local on_step = def.on_step
 
 	local gravity_acc = vector.new(0, -gravity, 0)
 	local function get_acceleration(pos1, vel1)
@@ -94,8 +98,6 @@ function ballistics.path_cast_midpoint(start_pos, start_vel, stop_after, gravity
 		return drag_acc + gravity_acc
 	end
 
-	local pos = start_pos
-	local vel = start_vel
 	local acc = get_acceleration(pos, vel)
 
 	local t = 0
@@ -104,8 +106,8 @@ function ballistics.path_cast_midpoint(start_pos, start_vel, stop_after, gravity
 		local next_pos = pos + dt * (vel + 0.5 * dt * acc)
 		local ray = Raycast(pos, next_pos, objects, liquids)
 
-		if debug_f then
-			debug_f(next_pos)
+		if on_step then
+			on_step(next_pos)
 		end
 
 		t = t + dt
@@ -125,4 +127,27 @@ function ballistics.path_cast_midpoint(start_pos, start_vel, stop_after, gravity
 		end
 		return pointed_thing
 	end
+end
+
+function ballistics.guess_collision_position(self, new_velocity)
+	local cast = ballistics.ballistic_cast({
+		pos = self._last_pos,
+		vel = self._last_velocity,
+		objects = false,
+		liquids = false,
+		stop_after = self._lifetime - self._last_lifetime,
+	})
+	local pointed_thing = cast()
+	while pointed_thing do
+		if pointed_thing.type == "node" then
+			return pointed_thing.intersection_point
+		end
+		pointed_thing = cast()
+	end
+	return ballistics.closest_point_to_two_lines(
+		self._last_pos,
+		self._last_velocity,
+		self.object:get_pos(),
+		new_velocity
+	)
 end

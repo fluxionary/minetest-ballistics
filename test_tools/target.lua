@@ -20,11 +20,37 @@ end
 
 ballistics.register_projectile("ballistics:test_target", {
 	visual = "sprite",
-	textures = { "ballistics_ball.png" },
+	textures = { "ballistics_bubble.png" },
 	collisionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2 },
 	selectionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2, rotate = true },
 
-	on_step = ballistics.on_step_seek_target,
+	parameters = {
+		particles = {
+			amount = 1,
+			time = 0.1,
+			texture = "ballistics_arrow_particle.png",
+			animation = {
+				type = "vertical_frames",
+				aspect_w = 8,
+				aspect_h = 8,
+				length = 1,
+			},
+			glow = 1,
+			minvel = { x = 0, y = -0.1, z = 0 },
+			maxvel = { x = 0, y = -0.1, z = 0 },
+			minacc = { x = 0, y = -0.1, z = 0 },
+			maxacc = { x = 0, y = -0.1, z = 0 },
+			minexptime = 0.5,
+			maxexptime = 0.5,
+			minsize = 2,
+			maxsize = 2,
+		},
+	},
+
+	on_step = function(...)
+		ballistics.on_step_seek_target(...)
+		ballistics.on_step_particles(...)
+	end,
 
 	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
 		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)

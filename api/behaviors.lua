@@ -34,8 +34,7 @@ function ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity,
 		return
 	end
 
-	local collision_position =
-		ballistics.estimate_collision_position(self._last_pos, self._last_velocity, our_pos, new_velocity)
+	local collision_position = ballistics.guess_collision_position(self, new_velocity)
 	if collision_position then
 		obj:set_pos(collision_position)
 	end

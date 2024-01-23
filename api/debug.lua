@@ -18,8 +18,7 @@ minetest.register_chatcommand("ballistics_show_collision", {
 })
 
 ballistics.register_on_hit_node(function(self, pos, node, axis, old_velocity, new_velocity)
-	local collision_position =
-		ballistics.estimate_collision_position(self._last_pos, self._last_velocity, self.object:get_pos(), new_velocity)
+	local collision_position = ballistics.guess_collision_position(self, new_velocity)
 	for name in pairs(ballistics.show_collisions_by_player_name) do
 		local player = minetest.get_player_by_name(name)
 		if player then
@@ -43,8 +42,7 @@ ballistics.register_on_hit_node(function(self, pos, node, axis, old_velocity, ne
 end)
 
 ballistics.register_on_hit_object(function(self, object, axis, old_velocity, new_velocity)
-	local collision_position =
-		ballistics.estimate_collision_position(self._last_pos, self._last_velocity, self.object:get_pos(), new_velocity)
+	local collision_position = ballistics.guess_collision_position(self, new_velocity)
 	for name in pairs(ballistics.show_collisions_by_player_name) do
 		local player = minetest.get_player_by_name(name)
 		if player then

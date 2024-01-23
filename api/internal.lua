@@ -59,7 +59,14 @@ local function raytrace_for_entity_collision(self)
 		return
 	end
 	local obj = self.object
-	for pointed_thing in Raycast(self._last_pos, obj:get_pos()) do
+	local cast = ballistics.ballistic_cast({
+		pos = self._last_pos,
+		vel = self._last_velocity,
+		objects = true,
+		liquids = false,
+		stop_after = self._lifetime - self._last_lifetime,
+	})
+	for pointed_thing in cast do
 		if pointed_thing.type == "object" and pointed_thing.ref ~= self._source_obj and pointed_thing.ref ~= obj then
 			local normal = pointed_thing.intersection_normal
 			if normal:equals(vector.zero()) then
@@ -81,16 +88,13 @@ local function raytrace_for_entity_collision(self)
 				axis = z
 			end
 			if
-				self._on_hit_object(
-					self,
-					pointed_thing.ref,
-					axis,
-					self._last_velocity,
-					obj:get_velocity(),
-					false,
-					true,
-					false
-				)
+				ballistics.handle_collision(self, {
+					type = "object",
+					axis = axis,
+					object = pointed_thing.ref,
+					old_velocity = self._last_velocity,
+					new_velocity = obj:get_velocity(),
+				}, false, true, false)
 			then
 				return true
 			end
@@ -126,10 +130,6 @@ function ballistics.on_step(self, dtime, moveresult)
 		done = done or self._on_step(self, dtime, moveresult)
 	end
 
-	if moveresult and #moveresult.collisions > 0 then
-		ballistics.chat_send_all("[DE-BUG] moveresult = @1", dump(moveresult))
-	end
-
 	-- TODO: using current object position to estimate collision position is garbage when there's multiple collisions
 	-- TODO: need to "roll back" collisions. given current position and most recent collision, raytrace to
 	-- TODO: find where we collided. then use *that* position and the next most recent position, recursively
@@ -143,7 +143,6 @@ function ballistics.on_step(self, dtime, moveresult)
 				moveresult.collides,
 				moveresult.standing_on_object
 			)
-			ballistics.chat_send_all("[DE-BUG] @1 @2 @3", tostring(_), tostring(done), dump(collision))
 			if done then
 				break
 			end
@@ -164,44 +163,60 @@ end
 -- if true is returned, the rest of the on_step callback isn't called - generally, assume the object was removed.
 function ballistics.handle_collision(self, collision, touching_ground, collides, standing_on_object)
 	if collision.type == "node" then
-		if self._on_hit_node then
-			local pos = collision.node_pos
-			local node = minetest.get_node_or_nil(pos)
+		local pos = collision.node_pos
+		local node = minetest.get_node_or_nil(pos)
 
-			if not node then
-				self.object:remove()
-				return true
+		if not node then
+			self.object:remove()
+			return true
+		end
+
+		local args = {
+			self,
+			pos,
+			node,
+			collision.axis,
+			collision.old_velocity,
+			collision.new_velocity,
+			touching_ground,
+			collides,
+			standing_on_object,
+		}
+
+		for i = 1, #ballistics.registered_on_hit_nodes do
+			local rv = ballistics.registered_on_hit_nodes[i](unpack(args))
+			if rv then
+				return rv
 			end
+		end
 
-			local rv = self._on_hit_node(
-				self,
-				pos,
-				node,
-				collision.axis,
-				collision.old_velocity,
-				collision.new_velocity,
-				touching_ground,
-				collides,
-				standing_on_object
-			)
-			ballistics.chat_send_all("[DE-BUG] self._on_hit_node -> @1 ", tostring(rv))
-			return rv
+		if self._on_hit_node then
+			return self._on_hit_node(unpack(args))
 		else
 			self.object:remove()
 			return true
 		end
 	elseif collision.type == "object" then
+		local args = {
+			self,
+			collision.object,
+			collision.axis,
+			collision.old_velocity,
+			collision.new_velocity,
+			touching_ground,
+			collides,
+			standing_on_object,
+		}
+
+		for i = 1, #ballistics.registered_on_hit_objects do
+			local rv = ballistics.registered_on_hit_objects[i](unpack(args))
+			if rv then
+				return rv
+			end
+		end
+
 		if self._on_hit_object then
-			return self._on_hit_object(
-				self,
-				collision.object,
-				collision.axis,
-				collision.old_velocity,
-				collision.new_velocity,
-				touching_ground,
-				collides,
-				standing_on_object
-			)
+			return self._on_hit_object(unpack(args))
 		else
 			self.object:remove()
 			return true
