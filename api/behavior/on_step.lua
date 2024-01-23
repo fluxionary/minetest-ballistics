@@ -64,7 +64,5 @@ function ballistics.on_step_seek_target(self, dtime, moveresult)
 end
 
 function ballistics.on_step_apply_drag(self, dtime, moveresult)
-	local pprops = self._parameters.drag
-	assert(pprops and pprops.coefficient, "must specify parameters.drag.coefficient in projectile definition")
-	ballistics.apply_drag(self, pprops.coefficient)
+	ballistics.apply_drag(self)
 end

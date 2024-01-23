@@ -36,14 +36,20 @@ function ballistics.get_density(node_name)
 	return density[node_name] or math.huge
 end
 
-function ballistics.apply_drag(self, drag_coefficient)
+function ballistics.apply_drag(entity)
+	local pprops = entity._parameters.drag
+	if not pprops then
+		return
+	end
+
+	local drag_coefficient = pprops.coefficient
 	if drag_coefficient == 0 then
 		return
 	end
-	if self._frozen then
+	if entity._frozen then
 		return
 	end
-	local obj = self.object
+	local obj = entity.object
 	if not obj then
 		return
 	end
@@ -61,7 +67,7 @@ function ballistics.apply_drag(self, drag_coefficient)
 		return
 	end
 	local acceleration = 0.5 * rho * (speed * speed) * drag_coefficient
-	local delta_v = acceleration * (self._lifetime - self._last_lifetime)
+	local delta_v = acceleration * (entity._lifetime - entity._last_lifetime)
 	delta_v = math.min(speed, delta_v) -- don't go backwards due to lag or something...
 	local delta_velocity = velocity * (-delta_v / speed)
 	obj:add_velocity(delta_velocity)
