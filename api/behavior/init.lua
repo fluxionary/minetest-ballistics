@@ -1,0 +1,6 @@
+ballistics.dofile("api", "behavior", "on_activate")
+ballistics.dofile("api", "behavior", "on_deactivate")
+ballistics.dofile("api", "behavior", "on_hit_node")
+ballistics.dofile("api", "behavior", "on_hit_object")
+ballistics.dofile("api", "behavior", "on_punch")
+ballistics.dofile("api", "behavior", "on_step")
