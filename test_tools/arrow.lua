@@ -51,10 +51,10 @@ ballistics.register_projectile("ballistics:test_arrow", {
 		ballistics.on_step_particles(...)
 	end,
 
-	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
-		ballistics.chat_send_all("hit @1 @@ @2", node.name, minetest.pos_to_string(pos))
-		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)
-		ballistics.on_hit_node_active_sound_stop(self, pos, node, axis, old_velocity, new_velocity)
+	on_hit_node = function(self, node_pos, node, axis, old_velocity, new_velocity)
+		ballistics.chat_send_all("hit @1 @@ @2", node.name, minetest.pos_to_string(node_pos))
+		ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity, new_velocity)
+		ballistics.on_hit_node_active_sound_stop(self, node_pos, node, axis, old_velocity, new_velocity)
 		minetest.after(15, function()
 			if self.object then
 				self.object:remove()

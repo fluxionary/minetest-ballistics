@@ -50,7 +50,7 @@ ballistics.register_projectile("ballistics:test_target", {
 })
 
 minetest.register_chatcommand("ballistics_target_test", {
-	privs = { server = 1 },
+	privs = { server = true },
 	func = function(name, speed)
 		if not name then
 			return false, S("need a name")
@@ -75,7 +75,7 @@ minetest.register_chatcommand("ballistics_target_test", {
 })
 
 minetest.register_chatcommand("ballistics_target_me", {
-	privs = { server = 1 },
+	privs = { server = true },
 	func = function(name, speed)
 		if not name then
 			return false, S("need a name")

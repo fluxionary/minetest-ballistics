@@ -32,6 +32,43 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, pa
 		ent._source_player_name = source_obj:get_player_name()
 	end
 	ent._target_obj = target_obj
+	local cast = ballistics.path_cast_midpoint(
+		pos,
+		vel,
+		nil,
+		nil,
+		(ent._parameters.drag or {}).coefficient,
+		nil,
+		false,
+		false,
+		function(pos_)
+			ballistics.chat_send_all("[DE-BUG] pos_=@1", minetest.pos_to_string(futil.vector.round(pos_, 0.01)))
+			minetest.add_particlespawner({
+				amount = 1,
+				time = 0.1,
+				texture = "ballistics_arrow_particle.png^[colorize:red:127",
+				animation = {
+					type = "vertical_frames",
+					aspect_w = 8,
+					aspect_h = 8,
+					length = 1,
+				},
+				glow = 1,
+				minvel = { x = 0, y = 0, z = 0 },
+				maxvel = { x = 0, y = 0, z = 0 },
+				minacc = { x = 0, y = 0, z = 0 },
+				maxacc = { x = 0, y = 0, z = 0 },
+				minexptime = 10,
+				maxexptime = 10,
+				minsize = 2,
+				maxsize = 2,
+				minpos = pos_,
+				maxpos = pos_,
+			})
+		end
+	)
+	ballistics.chat_send_all("[DE-BUG] cast() = @1", dump(cast()))
+
 	return obj
 end
 

@@ -75,3 +75,54 @@ function ballistics.estimate_collision_position(last_pos, last_vel, cur_pos, cur
 	local E = B + b * ((ab * ac - bc * a2) / denom)
 	return (D + E) / 2
 end
+
+-- https://en.wikipedia.org/wiki/Midpoint_method
+-- https://indico.cern.ch/event/831093/attachments/1896309/3218515/ub_py410_odes.pdf (page 9)
+function ballistics.path_cast_midpoint(start_pos, start_vel, stop_after, gravity, drag, dt, objects, liquids, debug_f)
+	stop_after = stop_after or 10
+	gravity = gravity or movement_gravity
+	drag = drag or 0
+	dt = dt or 0.09
+	objects = futil.coalesce(objects, true)
+	liquids = futil.coalesce(liquids, true)
+
+	local gravity_acc = vector.new(0, -gravity, 0)
+	local function get_acceleration(pos1, vel1)
+		local node = minetest.get_node(pos1:round())
+		local rho = ballistics.get_density(node.name)
+		local drag_acc = -vel1:normalize() * 0.5 * rho * drag * vel1:dot(vel1)
+		return drag_acc + gravity_acc
+	end
+
+	local pos = start_pos
+	local vel = start_vel
+	local acc = get_acceleration(pos, vel)
+
+	local t = 0
+
+	local function get_next_ray()
+		local next_pos = pos + dt * (vel + 0.5 * dt * acc)
+		local ray = Raycast(pos, next_pos, objects, liquids)
+
+		if debug_f then
+			debug_f(next_pos)
+		end
+
+		t = t + dt
+		pos = next_pos
+		vel = vel + acc * dt
+		acc = get_acceleration(pos, vel)
+		return ray
+	end
+
+	local ray = get_next_ray()
+
+	return function()
+		local pointed_thing = ray()
+		while t <= stop_after and not pointed_thing do
+			ray = get_next_ray()
+			pointed_thing = ray()
+		end
+		return pointed_thing
+	end
+end

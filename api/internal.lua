@@ -54,6 +54,50 @@ function ballistics.on_activate(self, staticdata)
 	end
 end
 
+local function raytrace_for_entity_collision(self)
+	if not self._on_hit_object then
+		return
+	end
+	local obj = self.object
+	for pointed_thing in Raycast(self._last_pos, obj:get_pos()) do
+		if pointed_thing.type == "object" and pointed_thing.ref ~= self._source_obj and pointed_thing.ref ~= obj then
+			local normal = pointed_thing.intersection_normal
+			if normal:equals(vector.zero()) then
+				if self._last_velocity:equals(vector.zero()) then
+					normal = vector.new(1, 0, 0)
+				else
+					normal = self._last_velocity:normalize()
+				end
+			end
+			local x = math.abs(normal.x)
+			local y = math.abs(normal.y)
+			local z = math.abs(normal.z)
+			local axis
+			if x >= y and x >= z then
+				axis = x
+			elseif y >= x and y >= z then
+				axis = y
+			else
+				axis = z
+			end
+			if
+				self._on_hit_object(
+					self,
+					pointed_thing.ref,
+					axis,
+					self._last_velocity,
+					obj:get_velocity(),
+					false,
+					true,
+					false
+				)
+			then
+				return true
+			end
+		end
+	end
+end
+
 function ballistics.on_step(self, dtime, moveresult)
 	local obj = self.object
 	if not obj then
@@ -73,27 +117,34 @@ function ballistics.on_step(self, dtime, moveresult)
 	if self._first_step then
 		if self._collide_with_objects then
 			obj:set_properties({ collide_with_objects = true })
-			-- TODO: check for collisions with entities on first step? tricky tho
+			done = raytrace_for_entity_collision(self)
 		end
 		self._first_step = nil
 	end
 
 	if self._on_step then
-		done = self._on_step(self, dtime, moveresult)
+		done = done or self._on_step(self, dtime, moveresult)
 	end
+
+	if moveresult and #moveresult.collisions > 0 then
+		ballistics.chat_send_all("[DE-BUG] moveresult = @1", dump(moveresult))
+	end
+
+	-- TODO: using current object position to estimate collision position is garbage when there's multiple collisions
+	-- TODO: need to "roll back" collisions. given current position and most recent collision, raytrace to
+	-- TODO: find where we collided. then use *that* position and the next most recent position, recursively
 
 	if moveresult and not done then
 		for _, collision in ipairs(moveresult.collisions) do
-			if
-				ballistics.handle_collision(
-					self,
-					collision,
-					moveresult.touching_ground,
-					moveresult.collides,
-					moveresult.standing_on_object
-				)
-			then
-				done = true
+			done = ballistics.handle_collision(
+				self,
+				collision,
+				moveresult.touching_ground,
+				moveresult.collides,
+				moveresult.standing_on_object
+			)
+			ballistics.chat_send_all("[DE-BUG] @1 @2 @3", tostring(_), tostring(done), dump(collision))
+			if done then
 				break
 			end
 		end
@@ -122,7 +173,7 @@ function ballistics.handle_collision(self, collision, touching_ground, collides,
 				return true
 			end
 
-			return self._on_hit_node(
+			local rv = self._on_hit_node(
 				self,
 				pos,
 				node,
@@ -133,6 +184,8 @@ function ballistics.handle_collision(self, collision, touching_ground, collides,
 				collides,
 				standing_on_object
 			)
+			ballistics.chat_send_all("[DE-BUG] self._on_hit_node -> @1 ", tostring(rv))
+			return rv
 		else
 			self.object:remove()
 			return true

@@ -1,3 +1,6 @@
+ballistics.registered_on_hit_nodes, ballistics.register_on_hit_node = futil.make_registration()
+ballistics.registered_on_hit_objects, ballistics.register_on_hit_object = futil.make_registration()
+
 function ballistics.register_projectile(name, def)
 	minetest.register_entity(name, {
 		initial_properties = {
@@ -32,8 +35,28 @@ function ballistics.register_projectile(name, def)
 		_collide_with_objects = futil.coalesce(def.collide_with_objects, true),
 		_update_period = def.update_period,
 
-		_on_hit_node = def.on_hit_node,
-		_on_hit_object = def.on_hit_object,
+		_on_hit_node = function(...)
+			for i = 1, #ballistics.registered_on_hit_nodes do
+				local rv = ballistics.registered_on_hit_nodes[i](...)
+				if rv then
+					return
+				end
+			end
+			if def.on_hit_node then
+				return def.on_hit_node(...)
+			end
+		end,
+		_on_hit_object = function(...)
+			for i = 1, #ballistics.registered_on_hit_objects do
+				local rv = ballistics.registered_on_hit_objects[i](...)
+				if rv then
+					return rv
+				end
+			end
+			if def.on_hit_object then
+				return def.on_hit_object(...)
+			end
+		end,
 
 		_parameters = def.parameters,
 

@@ -32,6 +32,10 @@ minetest.register_on_mods_loaded(function()
 	end
 end)
 
+function ballistics.get_density(node_name)
+	return density[node_name] or math.huge
+end
+
 function ballistics.apply_drag(self, drag_coefficient)
 	if drag_coefficient == 0 then
 		return
@@ -50,7 +54,7 @@ function ballistics.apply_drag(self, drag_coefficient)
 
 	pos = pos:round()
 	local node = get_node(pos)
-	local rho = density[node.name] or math.huge
+	local rho = ballistics.get_density(node.name)
 	local velocity = obj:get_velocity()
 	local speed = velocity:length()
 	if speed == 0 then
