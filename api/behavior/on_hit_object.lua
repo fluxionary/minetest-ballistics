@@ -84,13 +84,17 @@ function ballistics.on_hit_object_punch(self, target, intersection_point, inters
 	end
 
 	if puncher then
-		local arrow_velocity = self.object:get_velocity()
-		target:punch(
-			puncher,
-			tool_capabilities.full_punch_interval or math.huge,
-			scale_tool_capabilities(tool_capabilities, scale_speed, arrow_velocity),
-			direction
-		)
+		local arrow_velocity = self.object:get_velocity() or self._last_velocity
+		if arrow_velocity then
+			target:punch(
+				puncher,
+				tool_capabilities.full_punch_interval or math.huge,
+				scale_tool_capabilities(tool_capabilities, scale_speed, arrow_velocity),
+				direction
+			)
+		else
+			ballistics.log("warning", "on_hit_object_punch: arrow has no known velocity")
+		end
 	end
 
 	if remove then
