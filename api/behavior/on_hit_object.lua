@@ -55,7 +55,7 @@ end
 
 local function scale_tool_capabilities(tool_capabilities, scale_speed, velocity)
 	local speed = velocity:length()
-	local scale = speed / scale_speed
+	local scale = (speed / scale_speed) ^ 2 -- F = mv^2
 	local scaled_caps = table.copy(tool_capabilities)
 	for group, damage in pairs(scaled_caps.damage_groups) do
 		scaled_caps.damage_groups[group] = futil.math.probabilistic_round(damage * scale)
