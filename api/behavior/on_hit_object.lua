@@ -84,10 +84,11 @@ function ballistics.on_hit_object_punch(self, target, intersection_point, inters
 	end
 
 	if puncher then
+		local arrow_velocity = self.object:get_velocity()
 		target:punch(
 			puncher,
 			tool_capabilities.full_punch_interval or math.huge,
-			scale_tool_capabilities(tool_capabilities, scale_speed, self.object:get_velocity()),
+			scale_tool_capabilities(tool_capabilities, scale_speed, arrow_velocity),
 			direction
 		)
 	end
@@ -132,13 +133,17 @@ if minetest.get_modpath("tnt") then
 	end
 end
 
--- TODO: allow specifying multiple possible targets, groups
 function ballistics.on_hit_object_replace(self, object, intersection_point, intersection_normal, box_id)
-	local pos0 = object:get_pos() or self.object:get_pos()
-	if not pos0 then
+	local pos
+	if object:get_pos() then
+		pos = futil.get_object_center(object)
+	elseif self.object:get_pos() then
+		pos = futil.get_object_center(self.object)
+	else
 		return
 	end
-	return ballistics.util.replace(self, pos0)
+	pos = pos:round()
+	return ballistics.util.replace(self, pos)
 end
 
 function ballistics.on_hit_object_active_sound_stop(self, object, intersection_point, intersection_normal, box_id)

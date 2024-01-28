@@ -1,5 +1,6 @@
 ballistics.util = {}
 
+-- TODO: allow specifying multiple possible targets, groups
 function ballistics.util.replace(self, pos0)
 	local pprops = self._parameters.replace
 	assert(pprops, "must specify parameters.replace in projectile definition")
