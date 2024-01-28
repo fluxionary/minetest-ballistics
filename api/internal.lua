@@ -130,12 +130,18 @@ local function cast_for_collisions(self)
 
 	for pointed_thing in cast do
 		if pointed_thing.type == "object" then
+			local ref = pointed_thing.ref
 			-- TODO collision with source should be an optional parameter
-			if pointed_thing.ref ~= self._source_obj and pointed_thing.ref ~= obj then
+			-- TODO non-physical entities should also be an optional parameter (use arrows to pick up remote items!)
+			if ref ~= self._source_obj and ref ~= obj and ref:get_properties().physical then
 				return handle_object_collision(self, pointed_thing)
 			end
 		elseif pointed_thing.type == "node" then
-			return handle_node_collision(self, pointed_thing)
+			local node = minetest.get_node(pointed_thing.under)
+			local def = ItemStack(node.name):get_definition()
+			if def.walkable then -- TODO this should also be an optional parameter?
+				return handle_node_collision(self, pointed_thing)
+			end
 		else
 			error(f("unexpected pointed_thing type %s", dump(pointed_thing)))
 		end
