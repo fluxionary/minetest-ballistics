@@ -8,7 +8,7 @@ local function get_target_visual_size(target)
 end
 
 -- TODO: this function currently does *NOT* work correctly
-function ballistics.on_hit_object_stick(self, target, axis, old_velocity, new_velocity)
+function ballistics.on_hit_object_stick(self, target, intersection_point, intersection_normal, box_id)
 	local obj = self.object
 	if not obj:get_pos() then
 		return
@@ -63,7 +63,7 @@ local function scale_tool_capabilities(tool_capabilities, scale_speed, velocity)
 	return scaled_caps
 end
 
-function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_velocity)
+function ballistics.on_hit_object_punch(self, target, intersection_point, intersection_normal, box_id)
 	local pprops = self._parameters.punch
 	assert(
 		pprops and pprops.tool_capabilities,
@@ -87,7 +87,7 @@ function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_ve
 		target:punch(
 			puncher,
 			tool_capabilities.full_punch_interval or math.huge,
-			scale_tool_capabilities(tool_capabilities, scale_speed, old_velocity),
+			scale_tool_capabilities(tool_capabilities, scale_speed, self.object:get_velocity()),
 			direction
 		)
 	end
@@ -98,7 +98,7 @@ function ballistics.on_hit_object_punch(self, target, axis, old_velocity, new_ve
 	end
 end
 
-function ballistics.on_hit_object_add_entity(self, target, axis, old_velocity, new_velocity)
+function ballistics.on_hit_object_add_entity(self, target, intersection_point, intersection_normal, box_id)
 	local pprops = self._parameters.add_entity
 	local entity_name = pprops.entity_name
 	local chance = pprops.chance or 1
@@ -106,28 +106,7 @@ function ballistics.on_hit_object_add_entity(self, target, axis, old_velocity, n
 
 	local target_pos = target:get_pos()
 	if target_pos and math.random(chance) == 1 then
-		local last_pos = self._last_pos:round()
-		local delta = vector.zero()
-		if axis == "x" then
-			if target_pos.x < last_pos.x then
-				delta = vector.new(1, 0, 0)
-			else
-				delta = vector.new(-1, 0, 0)
-			end
-		elseif axis == "y" then
-			if target_pos.y < last_pos.y then
-				delta = vector.new(0, 1, 0)
-			else
-				delta = vector.new(0, -1, 0)
-			end
-		elseif axis == "z" then
-			if target_pos.z < last_pos.z then
-				delta = vector.new(0, 0, 1)
-			else
-				delta = vector.new(0, 0, -1)
-			end
-		end
-		minetest.add_entity(target_pos + delta, entity_name, staticdata)
+		minetest.add_entity(target_pos + intersection_normal, entity_name, staticdata)
 	end
 
 	self.object:remove()
@@ -135,7 +114,7 @@ function ballistics.on_hit_object_add_entity(self, target, axis, old_velocity, n
 end
 
 if minetest.get_modpath("tnt") then
-	function ballistics.on_hit_object_boom(self, target, axis, old_velocity, new_velocity)
+	function ballistics.on_hit_object_boom(self, target, intersection_point, intersection_normal, box_id)
 		local boom = self._parameters.boom or {}
 		local def = table.copy(boom)
 		if self._source_obj and minetest.is_player(self._source_obj) then
@@ -154,7 +133,7 @@ if minetest.get_modpath("tnt") then
 end
 
 -- TODO: allow specifying multiple possible targets, groups
-function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_velocity)
+function ballistics.on_hit_object_replace(self, object, intersection_point, intersection_normal, box_id)
 	local pos0 = object:get_pos() or self.object:get_pos()
 	if not pos0 then
 		return
@@ -162,14 +141,14 @@ function ballistics.on_hit_object_replace(self, object, axis, old_velocity, new_
 	return ballistics.util.replace(self, pos0)
 end
 
-function ballistics.on_hit_object_active_sound_stop(self)
+function ballistics.on_hit_object_active_sound_stop(self, object, intersection_point, intersection_normal, box_id)
 	if self._active_sound_handle then
 		minetest.sound_stop(self._active_sound_handle)
 		self._active_sound_handle = nil
 	end
 end
 
-function ballistics.on_hit_object_hit_sound_play(self)
+function ballistics.on_hit_object_hit_sound_play(self, object, intersection_point, intersection_normal, box_id)
 	local pos = self.object:get_pos() or self._last_pos
 	if not pos then
 		return
@@ -187,7 +166,7 @@ function ballistics.on_hit_object_hit_sound_play(self)
 	minetest.sound_play(spec, parameters, true)
 end
 
-function ballistics.on_hit_object_drop_item(self)
+function ballistics.on_hit_object_drop_item(self, object, intersection_point, intersection_normal, box_id)
 	local pprops = self._parameters.drop_item
 	assert(pprops and pprops.item, "must specify parameters.drop_item.item in projectile definition")
 	local item = pprops.item
@@ -206,8 +185,4 @@ function ballistics.on_hit_object_drop_item(self)
 	end
 	obj:remove()
 	return true
-end
-
-function ballistics.on_hit_object_become_non_physical(self)
-	self.object:set_properties({ physical = false })
 end

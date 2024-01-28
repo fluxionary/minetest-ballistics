@@ -4,10 +4,10 @@ ballistics.registered_on_hit_objects, ballistics.register_on_hit_object = futil.
 function ballistics.register_projectile(name, def)
 	minetest.register_entity(name, {
 		initial_properties = {
-			physical = true,
-			-- collide_with_objects will be set to true *AFTER* the first step, to prevent collisions with the source
+			physical = false,
 			collide_with_objects = false,
-			static_save = false,
+
+			static_save = def.static_save or false,
 
 			hp_max = def.hp_max or 1,
 			pointable = futil.coalesce(def.pointable, true),
@@ -42,7 +42,16 @@ function ballistics.register_projectile(name, def)
 
 		_on_activate = def.on_activate,
 		on_activate = function(self, staticdata)
+			-- wrapped to allow overriding ballistics.on_activate
 			ballistics.on_activate(self, staticdata)
+		end,
+
+		get_staticdata = def.get_staticdata,
+
+		_on_step = def.on_step,
+		on_step = function(self, dtime)
+			-- wrapped to allow overriding ballistics.on_step
+			ballistics.on_step(self, dtime)
 		end,
 
 		on_attach_child = def.on_attach_child,
@@ -52,10 +61,5 @@ function ballistics.register_projectile(name, def)
 		on_detach_child = def.on_detach_child,
 		on_punch = def.on_punch,
 		on_rightclick = def.on_rightclick,
-
-		_on_step = def.on_step,
-		on_step = function(self, dtime, moveresult)
-			ballistics.on_step(self, dtime, moveresult)
-		end,
 	})
 end

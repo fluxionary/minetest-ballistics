@@ -51,10 +51,10 @@ ballistics.register_projectile("ballistics:test_arrow", {
 		ballistics.on_step_particles(...)
 	end,
 
-	on_hit_node = function(self, node_pos, node, axis, old_velocity, new_velocity)
+	on_hit_node = function(self, node_pos, node, ...)
 		ballistics.chat_send_all("hit @1 @@ @2", node.name, minetest.pos_to_string(node_pos))
-		ballistics.on_hit_node_freeze(self, node_pos, node, axis, old_velocity, new_velocity)
-		ballistics.on_hit_node_active_sound_stop(self, node_pos, node, axis, old_velocity, new_velocity)
+		ballistics.on_hit_node_freeze(self, node_pos, node, ...)
+		ballistics.on_hit_node_active_sound_stop(self, node_pos, node, ...)
 		minetest.after(15, function()
 			if self.object then
 				self.object:remove()
@@ -64,7 +64,7 @@ ballistics.register_projectile("ballistics:test_arrow", {
 		return true
 	end,
 
-	on_hit_object = function(self, object, axis, old_velocity, new_velocity)
+	on_hit_object = function(self, object, ...)
 		local name
 		if minetest.is_player(object) then
 			name = object:get_player_name()
@@ -76,7 +76,7 @@ ballistics.register_projectile("ballistics:test_arrow", {
 			name,
 			minetest.pos_to_string(futil.vector.round(object:get_pos(), 0.01))
 		)
-		ballistics.on_hit_object_stick(self, object, axis, old_velocity, new_velocity)
+		ballistics.on_hit_object_stick(self, object, ...)
 		ballistics.on_hit_object_active_sound_stop(self)
 		minetest.after(15, function()
 			if self.object then

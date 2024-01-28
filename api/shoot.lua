@@ -4,17 +4,17 @@ local v_rotate_around_axis = vector.rotate_around_axis
 local serialize = minetest.serialize
 
 local movement_gravity = tonumber(minetest.settings:get("movement_gravity")) or 9.81
-local acceleration_due_to_gravity = v_new(0, -2 * movement_gravity, 0)
+local acceleration_due_to_gravity = v_new(0, -2 * movement_gravity, 0) -- 2x because minetest
 
 -- may return nil
-function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, parameters, properties)
+function ballistics.shoot(entity_name, pos, velocity, acceleration, source_obj, target_obj, parameters, properties)
 	local obj = minetest.add_entity(
 		pos,
 		entity_name,
 		serialize({
 			parameters = parameters,
-			velocity = vel,
-			acceleration = acc or acceleration_due_to_gravity,
+			velocity = velocity,
+			acceleration = acceleration or acceleration_due_to_gravity,
 		})
 	)
 	if not obj then
@@ -35,11 +35,12 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, pa
 	if ballistics.settings.show_estimated_path then
 		local cast = ballistics.ballistic_cast({
 			pos = pos,
-			vel = vel,
+			velocity = velocity,
+			acceleration = acceleration,
+			drag = (ent._parameters.drag or {}).coefficient,
+			dt = 0.01,
 			objects = false,
 			liquids = false,
-			dt = 0.01,
-			drag = (ent._parameters.drag or {}).coefficient,
 			on_step = function(pos_)
 				minetest.add_particlespawner({
 					amount = 1,
@@ -72,10 +73,6 @@ function ballistics.shoot(entity_name, pos, vel, acc, source_obj, target_obj, pa
 end
 
 function ballistics.player_shoots(entity_name, player, speed, gravity, parameters, properties)
-	if not futil.is_player(player) then
-		-- TODO: figure out fake player compatibility
-		return
-	end
 	local look = player:get_look_dir()
 	local eye_height = v_new(0, player:get_properties().eye_height, 0)
 	local eye_offset = player:get_eye_offset() * 0.1

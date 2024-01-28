@@ -52,8 +52,8 @@ ballistics.register_projectile("ballistics:test_target", {
 		ballistics.on_step_particles(...)
 	end,
 
-	on_hit_node = function(self, pos, node, axis, old_velocity, new_velocity)
-		ballistics.on_hit_node_freeze(self, pos, node, axis, old_velocity, new_velocity)
+	on_hit_node = function(self, pos, node, ...)
+		ballistics.on_hit_node_freeze(self, pos, node, ...)
 		minetest.after(15, function()
 			if self.object then
 				self.object:remove()

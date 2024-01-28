@@ -5,6 +5,7 @@ local pi = math.pi
 local sqrt = math.sqrt
 
 local v_new = vector.new
+local v_zero = vector.zero
 
 local deserialize = minetest.deserialize
 
@@ -17,7 +18,6 @@ function ballistics.on_activate(self, staticdata)
 	self._lifetime = 0
 	self._last_lifetime = 0
 	self._last_pos = obj:get_pos()
-	self._first_step = true
 
 	local initial_properties = deserialize(staticdata)
 
@@ -30,16 +30,19 @@ function ballistics.on_activate(self, staticdata)
 	if initial_properties.velocity then
 		local velocity = vector.copy(initial_properties.velocity)
 		obj:set_velocity(velocity)
+		self._last_velocity = velocity
 		self._initial_speed = velocity:length()
-		self._last_velocity = vector.copy(velocity)
 	else
-		self._initial_speed = 0
 		self._last_velocity = vector.zero()
+		self._initial_speed = 0
 	end
 	if initial_properties.acceleration then
-		obj:set_acceleration(initial_properties.acceleration)
-		self._initial_gravity = initial_properties.acceleration.y
+		local acceleration = vector.copy(initial_properties.acceleration)
+		obj:set_acceleration(acceleration)
+		self._last_acceleration = acceleration
+		self._initial_gravity = acceleration.y
 	else
+		self._last_acceleration = vector.zero()
 		self._initial_gravity = 0
 	end
 
@@ -54,55 +57,92 @@ function ballistics.on_activate(self, staticdata)
 	end
 end
 
-local function raytrace_for_entity_collision(self)
-	if not self._on_hit_object then
-		return
+local function handle_object_collision(self, pointed_thing)
+	local args = {
+		self,
+		pointed_thing.ref,
+		pointed_thing.intersection_point,
+		pointed_thing.intersection_normal,
+		pointed_thing.box_id,
+	}
+
+	for i = 1, #ballistics.registered_on_hit_objects do
+		local rv = ballistics.registered_on_hit_objects[i](unpack(args))
+		if rv then
+			return rv
+		end
 	end
+
+	if self._on_hit_object then
+		return self._on_hit_object(unpack(args))
+	else
+		self.object:remove()
+		return true
+	end
+end
+
+local function handle_node_collision(self, pointed_thing)
+	local node_pos = pointed_thing.under
+	local node = minetest.get_node_or_nil(node_pos)
+
+	if not node then
+		-- hit unloaded map, abort
+		self.object:remove()
+		return true
+	end
+
+	local args = {
+		self,
+		node_pos,
+		node,
+		pointed_thing.above,
+		pointed_thing.intersection_point,
+		pointed_thing.intersection_normal,
+		pointed_thing.box_id,
+	}
+
+	for i = 1, #ballistics.registered_on_hit_nodes do
+		local rv = ballistics.registered_on_hit_nodes[i](unpack(args))
+		if rv then
+			return rv
+		end
+	end
+
+	if self._on_hit_node then
+		return self._on_hit_node(unpack(args))
+	else
+		self.object:remove()
+		return true
+	end
+end
+
+local function cast_for_collisions(self)
 	local obj = self.object
 	local cast = ballistics.ballistic_cast({
 		pos = self._last_pos,
-		vel = self._last_velocity,
+		velocity = self._last_velocity,
+		acceleration = self._last_acceleration,
+		drag = (self._parameters.drag or {}).coefficient or 0,
+		stop_after = self._lifetime - self._last_lifetime,
 		objects = true,
 		liquids = false,
-		stop_after = self._lifetime - self._last_lifetime,
 	})
+
 	for pointed_thing in cast do
-		if pointed_thing.type == "object" and pointed_thing.ref ~= self._source_obj and pointed_thing.ref ~= obj then
-			local normal = pointed_thing.intersection_normal
-			if normal:equals(vector.zero()) then
-				if self._last_velocity:equals(vector.zero()) then
-					normal = vector.new(1, 0, 0)
-				else
-					normal = self._last_velocity:normalize()
-				end
+		if pointed_thing.type == "object" then
+			-- TODO collision with source should be an optional parameter
+			if pointed_thing.ref ~= self._source_obj and pointed_thing.ref ~= obj then
+				return handle_object_collision(self, pointed_thing)
 			end
-			local x = math.abs(normal.x)
-			local y = math.abs(normal.y)
-			local z = math.abs(normal.z)
-			local axis
-			if x >= y and x >= z then
-				axis = x
-			elseif y >= x and y >= z then
-				axis = y
-			else
-				axis = z
-			end
-			if
-				ballistics.handle_collision(self, {
-					type = "object",
-					axis = axis,
-					object = pointed_thing.ref,
-					old_velocity = self._last_velocity,
-					new_velocity = obj:get_velocity(),
-				}, false, true, false)
-			then
-				return true
-			end
+		elseif pointed_thing.type == "node" then
+			return handle_node_collision(self, pointed_thing)
+		else
+			error(f("unexpected pointed_thing type %s", dump(pointed_thing)))
 		end
 	end
 end
 
-function ballistics.on_step(self, dtime, moveresult)
+function ballistics.on_step(self, dtime)
 	local obj = self.object
 	if not obj then
 		return
@@ -112,123 +152,35 @@ function ballistics.on_step(self, dtime, moveresult)
 		return
 	end
 
-	local vel = obj:get_velocity()
+	local velocity = obj:get_velocity()
+	local acceleration = obj:get_acceleration()
 
 	self._lifetime = (self._lifetime or 0) + dtime
 
 	local done = false -- whether to stop processing early
 
-	if self._first_step then
-		if self._collide_with_objects then
-			obj:set_properties({ collide_with_objects = true })
-			done = raytrace_for_entity_collision(self)
-		end
-		self._first_step = nil
-	end
-
 	if self._on_step then
-		done = done or self._on_step(self, dtime, moveresult)
+		done = done or self._on_step(self, dtime)
 	end
 
-	-- TODO: using current object position to estimate collision position is garbage when there's multiple collisions
-	-- TODO: need to "roll back" collisions. given current position and most recent collision, raytrace to
-	-- TODO: find where we collided. then use *that* position and the next most recent position, recursively
+	if not self._frozen then
+		done = done or cast_for_collisions(self)
 
-	if moveresult and not done then
-		for _, collision in ipairs(moveresult.collisions) do
-			done = ballistics.handle_collision(
-				self,
-				collision,
-				moveresult.touching_ground,
-				moveresult.collides,
-				moveresult.standing_on_object
-			)
-			if done then
-				break
-			end
-		end
-	end
-
-	if not done then
-		if self._is_arrow then
+		if (not done) and self._is_arrow then
 			ballistics.adjust_pitch(self, dtime, self._update_period)
 		end
 	end
 
 	self._last_lifetime = self._lifetime
 	self._last_pos = pos
-	self._last_velocity = vel
-end
-
--- if true is returned, the rest of the on_step callback isn't called - generally, assume the object was removed.
-function ballistics.handle_collision(self, collision, touching_ground, collides, standing_on_object)
-	if collision.type == "node" then
-		local pos = collision.node_pos
-		local node = minetest.get_node_or_nil(pos)
-
-		if not node then
-			self.object:remove()
-			return true
-		end
-
-		local args = {
-			self,
-			pos,
-			node,
-			collision.axis,
-			collision.old_velocity,
-			collision.new_velocity,
-			touching_ground,
-			collides,
-			standing_on_object,
-		}
-
-		for i = 1, #ballistics.registered_on_hit_nodes do
-			local rv = ballistics.registered_on_hit_nodes[i](unpack(args))
-			if rv then
-				return rv
-			end
-		end
-
-		if self._on_hit_node then
-			return self._on_hit_node(unpack(args))
-		else
-			self.object:remove()
-			return true
-		end
-	elseif collision.type == "object" then
-		local args = {
-			self,
-			collision.object,
-			collision.axis,
-			collision.old_velocity,
-			collision.new_velocity,
-			touching_ground,
-			collides,
-			standing_on_object,
-		}
-
-		for i = 1, #ballistics.registered_on_hit_objects do
-			local rv = ballistics.registered_on_hit_objects[i](unpack(args))
-			if rv then
-				return rv
-			end
-		end
-
-		if self._on_hit_object then
-			return self._on_hit_object(unpack(args))
-		else
-			self.object:remove()
-			return true
-		end
-	else
-		error(f("unexepcted collision %s", dump(collision)))
-	end
+	self._last_velocity = velocity
+	self._last_acceleration = acceleration
 end
 
 function ballistics.freeze(self)
-	self.object:set_velocity(v_new(0, 0, 0))
-	self.object:set_acceleration(v_new(0, 0, 0))
+	local obj = self.object
+	obj:set_velocity(v_zero())
+	obj:set_acceleration(v_zero())
 
 	self._frozen = true
 end
@@ -251,12 +203,18 @@ function ballistics.adjust_pitch(self, dtime, period)
 	end
 
 	if period then
-		local elapsed = (self._elapsed or 0) + dtime
-		if elapsed < period then
-			self._last_pitch_adjust = elapsed
-			return
+		local last_pitch_adjust = self._last_pitch_adjust
+		if last_pitch_adjust then
+			local elapsed = last_pitch_adjust + dtime
+			if elapsed < period then
+				self._last_pitch_adjust = elapsed
+				return
+			else
+				self._last_pitch_adjust = 0
+			end
 		else
-			self._last_pitch_adjust = 0
+			-- always adjust pitch on first step
+			self._last_pitch_adjust = dtime
 		end
 	end
 

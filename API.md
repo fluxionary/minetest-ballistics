@@ -5,6 +5,7 @@ ballistics.register_projectile("mymod:myarrow", {
     -- visual parameters, see minetest's lua_api.md for details
 	is_arrow = true,  -- if true, entity will automatically be rotated depending on its velocity
     update_period = nil,  -- if a positive number, how often to rotate the entity
+
 	visual = "mesh",
 	mesh = "ballistics_arrow.b3d",
     visual_size = vector.new(1, 1, 1),
@@ -21,24 +22,25 @@ ballistics.register_projectile("mymod:myarrow", {
     show_on_minimap = false,
 
     -- physical parameters
-	collisionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2 },
-	selectionbox = { -0.2, -0.2, -0.2, 0.2, 0.2, 0.2, rotate = true },
-    collide_with_objects = true,
+	collisionbox = { -0.05, -0.05, -0.05, 0.05, 0.05, 0.05 },
+	selectionbox = { -0.05, -0.05, -0.2, 0.05, 0.05, 0.2, rotate = true },
     pointable = true,
 
     -- logical parameters
+    static_save = false,
     hp_max = 1,
     immortal = true,  -- prevent engine from modifying our HP directly
 	drag_coefficient = 0.0,  -- if > 0, projectile will slow down in air and slow down a lot in water.
 
     -- callbacks
     -- no callbacks are mandatory, and some pre-configured behaviors are available for use - see below
-    on_hit_node = function(self, pos, node, collision_axis, old_velocity, new_velocity)  end,
-    on_hit_object = function(self, object, collision_axis, old_velocity, new_velocity)  end,
+    on_hit_node = function(self, node_pos, node, above_pos, intersection_point, intersection_normal, box_id)  end,
+    on_hit_object = function(self, target, intersection_point, intersection_normal, box_id)  end,
 
     on_activate = function(self, staticdata)
-        -- projectiles are ephemeral (they don't static save), but staticdata can be passed on creation
-        -- arrows initialize their velocity, acceleration, and some other things before calling this function.
+        -- staticdata can be passed on creation. it is expected to be a table. internally, the keys "parameters",
+        -- "velocity" and "acceleration" are used.
+        -- projectiles will initialize their velocity, acceleration, and some other things before calling this function.
     end,
 
     on_step = function(self, dtime, moveresult)
@@ -48,6 +50,7 @@ ballistics.register_projectile("mymod:myarrow", {
     end,
 
     -- these all are as in a standard minetest entity
+    get_staticdata = function(self) end,
     on_attach_child = function(self, child) end,
     on_deactivate = function(self, removal) end,
     on_death = function(self, killer) end,
@@ -75,6 +78,10 @@ ballistics.register_projectile("mymod:myarrow", {
 * `self._last_velocity`
 
   the velocity of the projectile at the last server tick
+
+* `self._last_acceleration`
+
+  the acceleration of the projectile at the last server tick
 
 * `self._initial_gravity`
 
@@ -113,9 +120,9 @@ ballistics.register_projectile("mymod:myarrow", {
 note that you aren't restricted to using a single callback, most of these can easily be used together, e.g.
 
 ```lua
-    on_hit_node = function(self, pos, node, collision_axis, old_velocity, new_velocity)
-        ballistics.on_hit_node_freeze(self, pos, node, collision_axis, old_velocity, new_velocity)
-        ballistics.on_hit_node_active_sound_stop(self, pos, node, collision_axis, old_velocity, new_velocity)
+    on_hit_node = function(...)
+        ballistics.on_hit_node_freeze(...)
+        ballistics.on_hit_node_active_sound_stop(...)
     end
 ```
 
