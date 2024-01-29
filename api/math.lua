@@ -45,11 +45,10 @@ function ballistics.calculate_initial_velocity(source_pos, target_pos, initial_s
 	)
 end
 
--- Raycast in steps along an approximation of the arc of a projectile
 -- https://en.wikipedia.org/wiki/Midpoint_method
 -- https://indico.cern.ch/event/831093/attachments/1896309/3218515/ub_py410_odes.pdf (page 9)
 -- TODO https://scicomp.stackexchange.com/questions/21060/runge-kutta-simulation-for-projectile-motion-with-drag
-function ballistics.ballistic_cast(def)
+function ballistics.ballistic_path(def)
 	--[[
 		start_pos = vector,
 		start_vel = vector,
@@ -57,8 +56,6 @@ function ballistics.ballistic_cast(def)
 		drag = 0,
 		stop_after = 10,  -- in seconds
 		dt = 0.01,  -- timestep, in seconds
-		objects = true,  -- passed to Raycast
-		liquids = true,  -- passed to Raycast
 		on_step = function(pos) end,  -- if provided, called for each new point in the iteration. useful for visuals.
 	]]
 	local pos = assert(def.pos, "must specify a starting position")
@@ -67,8 +64,6 @@ function ballistics.ballistic_cast(def)
 	local drag = def.drag or 0
 	local stop_after = def.stop_after or 10
 	local dt = def.dt or 0.01
-	local objects = futil.coalesce(def.objects, true)
-	local liquids = futil.coalesce(def.liquids, true)
 	local on_step = def.on_step
 
 	local function get_acceleration(pos2, velocity2)
@@ -82,9 +77,12 @@ function ballistics.ballistic_cast(def)
 
 	local t = 0
 
-	local function get_next_ray()
+	return function()
+		if t > stop_after then
+			return
+		end
+
 		local next_pos = pos + dt * (velocity + 0.5 * dt * acceleration)
-		local ray = Raycast(pos, next_pos, objects, liquids)
 
 		if on_step then
 			on_step(next_pos)
@@ -94,16 +92,47 @@ function ballistics.ballistic_cast(def)
 		pos = next_pos
 		velocity = velocity + acceleration * dt
 		acceleration = get_acceleration(pos, velocity)
-		return ray
+		return next_pos
+	end
+end
+
+-- Raycast in steps along an approximation of the arc of a projectile
+function ballistics.ballistic_cast(def)
+	--[[
+		start_pos = vector,
+		start_vel = vector,
+		acceleration = {0, 2 * 9.81, 0},  -- 2x cuz minetest
+		drag = 0,
+		stop_after = 10,  -- in seconds
+		dt = 0.01,  -- timestep, in seconds
+		objects = true,  -- passed to Raycast
+		liquids = true,  -- passed to Raycast
+		on_step = function(pos) end,  -- if provided, called for each new point in the iteration. useful for visuals.
+	]]
+
+	local pos = assert(def.pos, "must specify a starting position")
+	local objects = futil.coalesce(def.objects, true)
+	local liquids = futil.coalesce(def.liquids, true)
+	local path = ballistics.ballistic_path(def)
+
+	local function get_next_ray()
+		local next_pos = path()
+		if next_pos then
+			local ray = Raycast(pos, next_pos, objects, liquids)
+			pos = next_pos
+			return ray
+		end
 	end
 
 	local ray = get_next_ray()
 
 	return function()
-		local pointed_thing = ray()
-		while t <= stop_after and not pointed_thing do
-			ray = get_next_ray()
+		local pointed_thing
+		while ray and not pointed_thing do
 			pointed_thing = ray()
+			if not pointed_thing then
+				ray = get_next_ray()
+			end
 		end
 		return pointed_thing
 	end
