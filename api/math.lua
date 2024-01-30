@@ -3,6 +3,8 @@ local cos = math.cos
 local sin = math.sin
 local sqrt = math.sqrt
 
+local f = string.format
+
 local movement_gravity = tonumber(minetest.settings:get("movement_gravity")) or 9.81
 local acceleration_due_to_gravity = vector.new(0, -2 * movement_gravity, 0) -- 2x because minetest
 
@@ -112,13 +114,44 @@ function ballistics.ballistic_cast(def)
 
 	local pos = assert(def.pos, "must specify a starting position")
 	local objects = futil.coalesce(def.objects, true)
+	local objects_physical = futil.coalesce(def.objects_physical, true)
+	local objects_collide_with_objects = futil.coalesce(def.objects_collide_with_objects, true)
 	local liquids = futil.coalesce(def.liquids, true)
+	local nodes_walkable = futil.coalesce(def.walkable, true)
 	local path = ballistics.ballistic_path(def)
+
+	local function filter_ray(ray)
+		return function()
+			local pointed_thing = ray()
+			if not pointed_thing then
+				return
+			end
+			while pointed_thing do
+				if pointed_thing.type == "node" then
+					local node_def = ItemStack(minetest.get_node(pointed_thing.under).name):get_definition()
+					if (not nodes_walkable) or node_def.walkable then
+						return pointed_thing
+					end
+				elseif pointed_thing.type == "object" then
+					local props = pointed_thing.ref:get_properties()
+					if
+						((not objects_physical) or props.physical)
+						and ((not objects_collide_with_objects) or props.collide_with_objects)
+					then
+						return pointed_thing
+					end
+				else
+					error(f("unexpected pointed_thing type %s", dump(pointed_thing)))
+				end
+				pointed_thing = ray()
+			end
+		end
+	end
 
 	local function get_next_ray()
 		local next_pos = path()
 		if next_pos then
-			local ray = Raycast(pos, next_pos, objects, liquids)
+			local ray = filter_ray(Raycast(pos, next_pos, objects, liquids))
 			pos = next_pos
 			return ray
 		end
