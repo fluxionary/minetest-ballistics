@@ -89,7 +89,7 @@ ballistics.register_projectile("ballistics:test_arrow", {
 })
 
 minetest.register_tool("ballistics:test_arrow", {
-	name = "shoot an arrow",
+	description = ballistics.S("shoot an arrow"),
 	inventory_image = "ballistics_test_tool.png",
 	groups = { not_in_creative_inventory = 1 },
 	on_place = function(itemstack, placer, pointed_thing) end,
