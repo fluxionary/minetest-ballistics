@@ -32,43 +32,6 @@ function ballistics.shoot(entity_name, pos, velocity, acceleration, source_obj, 
 		ent._source_player_name = source_obj:get_player_name()
 	end
 	ent._target_obj = target_obj
-	if ballistics.settings.show_estimated_path then
-		local cast = ballistics.ballistic_cast({
-			pos = pos,
-			velocity = velocity,
-			acceleration = acceleration,
-			drag = (ent._parameters.drag or {}).coefficient,
-			dt = 0.01,
-			objects = false,
-			liquids = false,
-			on_step = function(pos_)
-				minetest.add_particlespawner({
-					amount = 1,
-					time = 0.1,
-					texture = "ballistics_arrow_particle.png^[colorize:red:127",
-					animation = {
-						type = "vertical_frames",
-						aspect_w = 8,
-						aspect_h = 8,
-						length = 1,
-					},
-					glow = 1,
-					minvel = { x = 0, y = 0, z = 0 },
-					maxvel = { x = 0, y = 0, z = 0 },
-					minacc = { x = 0, y = 0, z = 0 },
-					maxacc = { x = 0, y = 0, z = 0 },
-					minexptime = 10,
-					maxexptime = 10,
-					minsize = 2,
-					maxsize = 2,
-					minpos = pos_,
-					maxpos = pos_,
-				})
-			end,
-		})
-		cast()
-	end
-
 	return obj
 end
 

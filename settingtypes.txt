@@ -1,2 +1,0 @@
-# if true, show the path we expect the projectile to follow using red particles
-ballistics:show_estimated_path (show estimated path) bool true

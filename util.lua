@@ -45,3 +45,40 @@ function ballistics.util.replace(self, pos0)
 		return true
 	end
 end
+
+function ballistics.util.show_path(pos, velocity, acceleration, drag)
+	local cast = ballistics.ballistic_cast({
+		pos = pos,
+		velocity = velocity,
+		acceleration = acceleration,
+		drag = drag,
+		dt = 0.01,
+		objects = false,
+		liquids = false,
+		on_step = function(pos_)
+			minetest.add_particlespawner({
+				amount = 1,
+				time = 0.1,
+				texture = "ballistics_arrow_particle.png^[colorize:red:127",
+				animation = {
+					type = "vertical_frames",
+					aspect_w = 8,
+					aspect_h = 8,
+					length = 1,
+				},
+				glow = 1,
+				minvel = { x = 0, y = 0, z = 0 },
+				maxvel = { x = 0, y = 0, z = 0 },
+				minacc = { x = 0, y = 0, z = 0 },
+				maxacc = { x = 0, y = 0, z = 0 },
+				minexptime = 10,
+				maxexptime = 10,
+				minsize = 2,
+				maxsize = 2,
+				minpos = pos_,
+				maxpos = pos_,
+			})
+		end,
+	})
+	cast()
+end
