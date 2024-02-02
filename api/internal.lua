@@ -123,7 +123,8 @@ local function cast_for_collisions(self)
 		velocity = self._last_velocity,
 		acceleration = self._last_acceleration,
 		drag = (self._parameters.drag or {}).coefficient or 0,
-		stop_after = self._lifetime - self._last_lifetime,
+		dt = 0.1,
+		stop_after = self._lifetime - self._last_lifetime + 0.01,
 		objects = true,
 		liquids = false,
 	})
@@ -131,9 +132,10 @@ local function cast_for_collisions(self)
 	for pointed_thing in cast do
 		if pointed_thing.type == "object" then
 			local ref = pointed_thing.ref
+			local props = ref:get_properties()
 			-- TODO collision with source should be an optional parameter
 			-- TODO non-physical entities should also be an optional parameter (use arrows to pick up remote items!)
-			if ref ~= self._source_obj and ref ~= obj and ref:get_properties().physical then
+			if ref ~= self._source_obj and ref ~= obj and props.physical and props.collide_with_objects then
 				return handle_object_collision(self, pointed_thing)
 			end
 		elseif pointed_thing.type == "node" then
