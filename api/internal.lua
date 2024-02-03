@@ -123,7 +123,7 @@ local function cast_for_collisions(self)
 		velocity = self._last_velocity,
 		acceleration = self._last_acceleration,
 		drag = (self._parameters.drag or {}).coefficient or 0,
-		dt = 0.1,
+		dt = 0.01,
 		stop_after = self._lifetime - self._last_lifetime + 0.01,
 		objects = true,
 		liquids = false,

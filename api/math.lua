@@ -151,7 +151,7 @@ function ballistics.ballistic_cast(def)
 	local function get_next_ray()
 		local next_pos = path()
 		if next_pos then
-			local ray = filter_ray(Raycast(pos, next_pos, objects, liquids))
+			local ray = filter_ray(futil.safecast(pos, next_pos, objects, liquids))
 			pos = next_pos
 			return ray
 		end
