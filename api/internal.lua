@@ -138,7 +138,11 @@ local function cast_for_collisions(self)
 			local props = ref:get_properties()
 			-- TODO collision with source should be an optional parameter
 			-- TODO non-physical entities should also be an optional parameter (use arrows to pick up remote items!)
-			if ref ~= self._source_obj and ref ~= obj and props.physical and props.collide_with_objects then
+			if
+				ref ~= self._source_obj
+				and ref ~= obj
+				and (minetest.is_player(ref) or (props.physical and props.collide_with_objects))
+			then
 				return handle_object_collision(self, pointed_thing)
 			end
 		elseif pointed_thing.type == "node" then

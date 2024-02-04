@@ -115,6 +115,7 @@ function ballistics.ballistic_cast(def)
 	local pos = assert(def.pos, "must specify a starting position")
 	local objects = futil.coalesce(def.objects, true)
 	local objects_physical = futil.coalesce(def.objects_physical, true)
+	local objects_player = futil.coalesce(def.objects_player, true)
 	local objects_collide_with_objects = futil.coalesce(def.objects_collide_with_objects, true)
 	local liquids = futil.coalesce(def.liquids, true)
 	local nodes_walkable = futil.coalesce(def.walkable, true)
@@ -135,8 +136,11 @@ function ballistics.ballistic_cast(def)
 				elseif pointed_thing.type == "object" then
 					local props = pointed_thing.ref:get_properties()
 					if
-						((not objects_physical) or props.physical)
-						and ((not objects_collide_with_objects) or props.collide_with_objects)
+						(
+							not objects_physical
+							or props.physical
+							or (objects_player and minetest.is_player(pointed_thing.ref))
+						) and ((not objects_collide_with_objects) or props.collide_with_objects)
 					then
 						return pointed_thing
 					end
