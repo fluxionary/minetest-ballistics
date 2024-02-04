@@ -51,6 +51,9 @@ function ballistics.on_activate(self, staticdata)
 	end
 
 	ballistics.set_initial_yaw(self)
+	if self._is_arrow then
+		ballistics.adjust_pitch(self)
+	end
 
 	if self._on_activate then
 		self._on_activate(self, staticdata)
