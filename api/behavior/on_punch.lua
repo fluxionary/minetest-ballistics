@@ -72,7 +72,8 @@ function ballistics.on_punch_pickup_item(self, puncher, time_from_last_punch, to
 	end
 	local item = pprops.item
 	local chance = pprops.chance or 1
-	if math.random(chance) == 1 then
+	local is_creative = minetest.is_creative_enabled(puncher:get_player_name())
+	if math.random(chance) == 1 and not (is_creative and puncher:get_inventory():contains_item("main", item)) then
 		local leftover = minetest.item_pickup(ItemStack(item), puncher, { type = "object", ref = obj })
 		if not leftover:is_empty() then
 			local pos = obj:get_pos() or puncher:get_pos()
