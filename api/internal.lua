@@ -149,7 +149,7 @@ local function cast_for_collisions(self)
 			local node = minetest.get_node(pointed_thing.under)
 			local node_stack = ItemStack(node.name)
 			-- TODO this should also be an optional parameter?
-			if (not node_stack:is_known()) or node_stack:get_definition().walkable then
+			if futil.coalesce(node_stack:get_definition().walkable, true) then
 				return handle_node_collision(self, pointed_thing)
 			end
 		else
