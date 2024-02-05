@@ -129,8 +129,8 @@ function ballistics.ballistic_cast(def)
 			end
 			while pointed_thing do
 				if pointed_thing.type == "node" then
-					local node_def = ItemStack(minetest.get_node(pointed_thing.under).name):get_definition()
-					if (not nodes_walkable) or node_def.walkable then
+					local node_stack = ItemStack(minetest.get_node(pointed_thing.under).name)
+					if (not nodes_walkable) or (not node_stack:is_known()) or node_stack:get_definition().walkable then
 						return pointed_thing
 					end
 				elseif pointed_thing.type == "object" then

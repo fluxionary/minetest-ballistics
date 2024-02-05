@@ -147,8 +147,9 @@ local function cast_for_collisions(self)
 			end
 		elseif pointed_thing.type == "node" then
 			local node = minetest.get_node(pointed_thing.under)
-			local def = ItemStack(node.name):get_definition()
-			if def.walkable then -- TODO this should also be an optional parameter?
+			local node_stack = ItemStack(node.name)
+			-- TODO this should also be an optional parameter?
+			if (not node_stack:is_known()) or node_stack:get_definition().walkable then
 				return handle_node_collision(self, pointed_thing)
 			end
 		else
