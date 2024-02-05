@@ -121,7 +121,7 @@ note that you aren't restricted to using a single callback, most of these can ea
 
 ```lua
     on_hit_node = function(...)
-        ballistics.on_hit_node_freeze(...)
+        ballistics.on_hit_node_attach(...)
         ballistics.on_hit_node_active_sound_stop(...)
     end
 ```
@@ -157,11 +157,10 @@ note that you aren't restricted to using a single callback, most of these can ea
 
 the default on_hit_node behavior is to disappear.
 
-* `on_hit_node = ballistics.on_hit_node_freeze`
+* `on_hit_node = ballistics.on_hit_node_attach`
 
   when the projectile hits a node, it will stop moving. useful for making arrows that "stick into" the ground and
-  stay there. *note*: because projectiles continue to move after they collide, we have to use math to estimate the
-  position of the projectile when it collided. this is usually fairly accurate, but be aware that it's not perfect.
+  stay there.
 
 * `on_hit_node = ballistics.on_hit_node_add_entity`
 
@@ -235,7 +234,7 @@ the default on_hit_node behavior is to disappear.
 
 the default on_hit_object behavior is to disappear.
 
-* `on_hit_object = ballistics.on_hit_object_stick`
+* `on_hit_object = ballistics.on_hit_object_attach`
 
   NOTE: this function currently does *NOT* work correctly - the projectile is *not* attached in the right place.
   when the projectile hits an object, it will attach itself to the object.

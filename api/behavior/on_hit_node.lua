@@ -1,11 +1,26 @@
-function ballistics.on_hit_node_freeze(self, node_pos, node, above_pos, intersection_point, intersection_normal, box_id)
+function ballistics.on_hit_node_attach(self, node_pos, node, above_pos, intersection_point, intersection_normal, box_id)
 	local obj = self.object
 	local our_pos = obj:get_pos()
 	if not our_pos then
 		return
 	end
 
+	if self._is_arrow then
+		local v = self._last_velocity
+		local r = obj:get_rotation()
+
+		if r and v then
+			obj:set_rotation(vector.new(math.atan2(v.y, math.sqrt(v.x ^ 2 + v.z ^ 2)), r.y, r.z + math.pi / 2))
+		end
+	end
+
 	obj:set_pos(intersection_point)
+	self._attach = {
+		type = "node",
+		node = node,
+		pos = node_pos,
+		above = above_pos,
+	}
 
 	ballistics.freeze(self)
 end

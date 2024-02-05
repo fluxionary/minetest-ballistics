@@ -46,7 +46,7 @@ function ballistics.apply_drag(entity)
 	if drag_coefficient == 0 then
 		return
 	end
-	if entity._frozen then
+	if entity._is_frozen then
 		return
 	end
 	local obj = entity.object

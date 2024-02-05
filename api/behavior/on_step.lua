@@ -30,7 +30,7 @@ function ballistics.on_step_particles(self, dtime, moveresult)
 end
 
 function ballistics.on_step_seek_target(self, dtime, moveresult)
-	if self._frozen then
+	if self._is_frozen then
 		return
 	end
 	local target = self._target_obj

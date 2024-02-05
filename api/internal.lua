@@ -178,7 +178,16 @@ function ballistics.on_step(self, dtime)
 		done = done or self._on_step(self, dtime)
 	end
 
-	if not self._frozen then
+	if self._attach then
+		if self._attach.type == "node" then
+			local old_node = self._attach.node
+			local cur_node = minetest.get_node(self._attach.pos)
+			if old_node.name ~= cur_node.name or old_node.param2 ~= cur_node.param2 then
+				ballistics.detach(self)
+			end
+		end
+		-- TODO object
+	elseif not self._is_frozen then
 		done = done or cast_for_collisions(self)
 
 		if (not done) and self._is_arrow then
@@ -197,7 +206,13 @@ function ballistics.freeze(self)
 	obj:set_velocity(v_zero())
 	obj:set_acceleration(v_zero())
 
-	self._frozen = true
+	self._is_frozen = true
+end
+
+function ballistics.detach(self)
+	self.object:set_acceleration(v_new(0, self._initial_gravity, 0))
+	self._attach = nil
+	self._is_frozen = nil
 end
 
 function ballistics.set_initial_yaw(self)
@@ -213,7 +228,7 @@ function ballistics.set_initial_yaw(self)
 end
 
 function ballistics.adjust_pitch(self, dtime, period)
-	if self._frozen then
+	if self._is_frozen then
 		return
 	end
 

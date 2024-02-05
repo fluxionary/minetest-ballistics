@@ -8,7 +8,7 @@ local function get_target_visual_size(target)
 end
 
 -- TODO: this function currently does *NOT* work correctly
-function ballistics.on_hit_object_stick(self, target, intersection_point, intersection_normal, box_id)
+function ballistics.on_hit_object_attach(self, target, intersection_point, intersection_normal, box_id)
 	local obj = self.object
 	if not obj:get_pos() then
 		return
