@@ -72,3 +72,56 @@ function ballistics.apply_drag(entity)
 	local delta_velocity = velocity * (-delta_v / speed)
 	obj:add_velocity(delta_velocity)
 end
+
+--[[
+-- TODO: this needs to apply drag iteratively, not all at once, because lag
+function ballistics.apply_drag(entity)
+	local pprops = entity._parameters.drag
+	if not pprops then
+		return
+	end
+
+	local drag_coefficient = pprops.coefficient
+	if drag_coefficient == 0 then
+		return
+	end
+	if entity._is_frozen then
+		return
+	end
+	local obj = entity.object
+	if not obj then
+		return
+	end
+	local pos = obj:get_pos()
+	if not pos then
+		return
+	end
+
+	local dtime = entity._lifetime - entity._last_lifetime
+
+	pos = pos:round()
+	local node = get_node(pos)
+	local rho = ballistics.get_density(node.name)
+	local base_velocity = obj:get_velocity()
+	local speed = base_velocity:length()
+	if speed == 0 then
+		return
+	end
+	local velocity = base_velocity
+
+	local elapsed = 0
+	for _ = 0, dtime, .01 do
+		elapsed = _
+		local acceleration = 0.5 * rho * (speed * speed) * drag_coefficient
+		local delta_v = math.min(speed, acceleration * .01) -- don't go backwards due to lag or something...
+		velocity = velocity * (1 - (delta_v / speed))
+		speed = velocity:length()
+	end
+
+	local acceleration = 0.5 * rho * (speed * speed) * drag_coefficient
+	local delta_v = math.min(speed, acceleration * (dtime - elapsed)) -- don't go backwards due to lag or something...
+	velocity = velocity * (1 - (delta_v / speed))
+
+	obj:add_velocity(base_velocity - velocity)
+end
+]]

@@ -38,9 +38,9 @@ function ballistics.on_punch_add_velocity(self, puncher, time_from_last_punch, t
 	obj:add_velocity(dir * scale)
 end
 
-function ballistics.on_punch_drop_item(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
-	local pprops = self._parameters.drop_item
-	assert(pprops and pprops.item, "must specify parameters.drop_item.item in projectile definition")
+function ballistics.on_punch_add_item(self, puncher, time_from_last_punch, tool_capabilities, dir, damage)
+	local pprops = self._parameters.add_item
+	assert(pprops and pprops.item, "must specify parameters.add_item.item in projectile definition")
 	local obj = self.object
 	local pos = obj:get_pos()
 	if not pos then

@@ -2,62 +2,61 @@
 
 ```lua
 ballistics.register_projectile("mymod:myarrow", {
-    -- visual parameters, see minetest's lua_api.md for details
+	-- visual parameters, see minetest's lua_api.md for details
 	is_arrow = true,  -- if true, entity will automatically be rotated depending on its velocity
-    update_period = nil,  -- if a positive number, how often to rotate the entity
-
+	update_period = nil,  -- if a positive number, how often to rotate the entity
 	visual = "mesh",
 	mesh = "ballistics_arrow.b3d",
-    visual_size = vector.new(1, 1, 1),
+	visual_size = vector.new(1, 1, 1),
 	textures = { "ballistics_arrow_mesh.png" },
-    spritediv = {x = 1, y = 1},
-    initial_sprite_basepos = {x = 0, y = 0},
-    colors = {},
-    is_visible = true,
-    use_texture_alpha = false,
-    backface_culling = true,
-    glow = 0,
-    damage_texture_modifier = "^[brighten",
-    shaded = true,
-    show_on_minimap = false,
+	spritediv = {x = 1, y = 1},
+	initial_sprite_basepos = {x = 0, y = 0},
+	colors = {},
+	is_visible = true,
+	use_texture_alpha = false,
+	backface_culling = true,
+	glow = 0,
+	damage_texture_modifier = "^[brighten",
+	shaded = true,
+	show_on_minimap = false,
 
-    -- physical parameters
+	-- physical parameters
 	collisionbox = { -0.05, -0.05, -0.05, 0.05, 0.05, 0.05 },
 	selectionbox = { -0.05, -0.05, -0.2, 0.05, 0.05, 0.2, rotate = true },
-    pointable = true,
+	pointable = true,
 
-    -- logical parameters
-    static_save = false,
-    hp_max = 1,
-    immortal = true,  -- prevent engine from modifying our HP directly
+	-- logical parameters
+	static_save = false,
+	hp_max = 1,
+	immortal = true,  -- prevent engine from modifying our HP directly
 	drag_coefficient = 0.0,  -- if > 0, projectile will slow down in air and slow down a lot in water.
 
-    -- callbacks
-    -- no callbacks are mandatory, and some pre-configured behaviors are available for use - see below
-    on_hit_node = function(self, node_pos, node, above_pos, intersection_point, intersection_normal, box_id)  end,
-    on_hit_object = function(self, target, intersection_point, intersection_normal, box_id)  end,
+	-- callbacks
+	-- no callbacks are mandatory, and some pre-configured behaviors are available for use - see below
+	on_hit_node = function(self, node_pos, node, above_pos, intersection_point, intersection_normal, box_id)  end,
+	on_hit_object = function(self, target, intersection_point, intersection_normal, box_id)  end,
 
-    on_activate = function(self, staticdata)
-        -- staticdata can be passed on creation. it is expected to be a table. internally, the keys "parameters",
-        -- "velocity" and "acceleration" are used.
-        -- projectiles will initialize their velocity, acceleration, and some other things before calling this function.
-    end,
+	on_activate = function(self, staticdata)
+		-- staticdata can be passed on creation. it is expected to be a serialized table. internally, the keys "parameters",
+		-- "velocity" and "acceleration" are used.
+		-- projectiles will initialize their velocity, acceleration, and some other things before calling this function.
+	end,
 
-    on_step = function(self, dtime, moveresult)
-        -- this is called after incrementing the projectile's lifetime. if it returns a truthy value, other standard
-        -- projectile on_step actions will *not* be called - handling collisions, adjusting arrow pitch, and applying
-        -- drag.
-    end,
+	on_step = function(self, dtime, moveresult)
+		-- this is called after incrementing the projectile's lifetime. if it returns a truthy value, other standard
+		-- projectile on_step actions will *not* be called - handling collisions, adjusting arrow pitch, and applying
+		-- drag.
+	end,
 
-    -- these all are as in a standard minetest entity
-    get_staticdata = function(self) end,
-    on_attach_child = function(self, child) end,
-    on_deactivate = function(self, removal) end,
-    on_death = function(self, killer) end,
-    on_detach = function(self, parent) end,
-    on_detach_child = function(self, child) end,
-    on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, dir, damage) end,
-    on_rightclick = function(self, clicker) end,
+	-- these all are as in a standard minetest entity
+	get_staticdata = function(self) end,
+	on_attach_child = function(self, child) end,
+	on_deactivate = function(self, removal) end,
+	on_death = function(self, killer) end,
+	on_detach = function(self, parent) end,
+	on_detach_child = function(self, child) end,
+	on_punch = function(self, puncher, time_from_last_punch, tool_capabilities, dir, damage) end,
+	on_rightclick = function(self, clicker) end,
 })
 ```
 
@@ -120,10 +119,10 @@ ballistics.register_projectile("mymod:myarrow", {
 note that you aren't restricted to using a single callback, most of these can easily be used together, e.g.
 
 ```lua
-    on_hit_node = function(...)
-        ballistics.on_hit_node_attach(...)
-        ballistics.on_hit_node_active_sound_stop(...)
-    end
+	on_hit_node = function(...)
+		ballistics.on_hit_node_attach(...)
+		ballistics.on_hit_node_active_sound_stop(...)
+	end
 ```
 
 ### on_activate_callbacks ###
@@ -135,15 +134,15 @@ note that you aren't restricted to using a single callback, most of these can ea
   required parameters:
   ```lua
   parameters = {
-      active_sound = {
-          spec = {
-              -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
-              name = "soundname",
-          },
-          parameters = {
-              -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
-          },
-      }
+	  active_sound = {
+		  spec = {
+			  -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
+			  name = "soundname",
+		  },
+		  parameters = {
+			  -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
+		  },
+	  }
   }
   ```
 
@@ -169,11 +168,11 @@ the default on_hit_node behavior is to disappear.
   this requires additional parameters specified in the projectile definition:
   ```lua
   parameters = {
-      add_entity = {
-          entity_name = "mymod:myentity",
-          chance = nil,  -- 1 / chance to spawn entity, defaults to 1
-          staticdata = nil,  -- optional, in case you want to specify staticdata to the entity on initialization
-      },
+	  add_entity = {
+		  entity_name = "mymod:myentity",
+		  chance = nil,  -- 1 / chance to spawn entity, defaults to 1
+		  staticdata = nil,  -- optional, in case you want to specify staticdata to the entity on initialization
+	  },
   }
   ```
 
@@ -183,9 +182,9 @@ the default on_hit_node behavior is to disappear.
   optionally, explosion parameters can be specified in the projectile definition:
   ```lua
   parameters = {
-      boom = {
-          -- see https://github.com/minetest/minetest_game/blob/43185f19e386af3b7a0831fc8e7417d0e54544e7/game_api.txt#L546-L547
-      },
+	  boom = {
+		  -- see https://github.com/minetest/minetest_game/blob/43185f19e386af3b7a0831fc8e7417d0e54544e7/game_api.txt#L546-L547
+	  },
   }
   ```
 
@@ -201,11 +200,11 @@ the default on_hit_node behavior is to disappear.
   this requires additional parameters specified in the projectile definition:
   ```lua
   parameters = {
-      replace = {
-          target = nil,  -- what to replace. defaults to "air". multiple nodes and groups are planned for a future release.
-          replacement = "mymod:mynode" or {name = "mymod:mynode", param2 = 0},  -- what to replace it with. required.
-          radius = nil,  -- how many additional nodes around the center to replace. defaults to 0 (just the center).
-      },
+	  replace = {
+		  target = nil,  -- what to replace. defaults to "air". multiple nodes and groups are planned for a future release.
+		  replacement = "mymod:mynode" or {name = "mymod:mynode", param2 = 0},  -- what to replace it with. required.
+		  radius = nil,  -- how many additional nodes around the center to replace. defaults to 0 (just the center).
+	  },
   }
   ```
 
@@ -218,15 +217,15 @@ the default on_hit_node behavior is to disappear.
   play a sound when you hit a node. a SimpleSoundSpec must be provided, a sound parameters table is optional:
   ```lua
   parameters = {
-      hit_sound = {
-          spec = {
-              -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
-              name = "soundname",
-          },
-          parameters = {
-              -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
-          },
-      }
+	  hit_sound = {
+		  spec = {
+			  -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
+			  name = "soundname",
+		  },
+		  parameters = {
+			  -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
+		  },
+	  }
   }
   ```
 
@@ -246,15 +245,15 @@ the default on_hit_object behavior is to disappear.
   damage is scaled with projectile speed. this requires additional parameters specified in the projectile definition:
   ```lua
   parameters = {
-      punch = {
-          tool_capabilities = {
-              -- required. see https://github.com/minetest/minetest/blob/335af393f09b3629587f14d41a90ded4a3cbddcd/doc/lua_api.md?plain=1#L2248-L2436
-              -- for details. probably only damage_groups are relevant.
-          },
-          scale_speed = nil,  -- speed to which damage from the projectile is scaled. defaults to the initial speed.
-          remove = nil,  -- if true, the projectile is removed. leave this alone if you want to e.g. leave an arrow
-                         -- attached to the target
-      },
+	  punch = {
+		  tool_capabilities = {
+			  -- required. see https://github.com/minetest/minetest/blob/335af393f09b3629587f14d41a90ded4a3cbddcd/doc/lua_api.md?plain=1#L2248-L2436
+			  -- for details. probably only damage_groups are relevant.
+		  },
+		  scale_speed = nil,  -- speed to which damage from the projectile is scaled. defaults to the initial speed.
+		  remove = nil,  -- if true, the projectile is removed. leave this alone if you want to e.g. leave an arrow
+						 -- attached to the target
+	  },
   }
   ```
 
@@ -264,11 +263,11 @@ the default on_hit_object behavior is to disappear.
   this requires additional parameters specified in the projectile definition:
   ```lua
   parameters = {
-      add_entity = {
-          entity_name = "mymod:myentity",
-          chance = nil,  -- 1 / chance to spawn entity, defaults to 1
-          staticdata = nil,  -- optional, in case you want to specify staticdata to the entity on initialization
-      },
+	  add_entity = {
+		  entity_name = "mymod:myentity",
+		  chance = nil,  -- 1 / chance to spawn entity, defaults to 1
+		  staticdata = nil,  -- optional, in case you want to specify staticdata to the entity on initialization
+	  },
   }
   ```
 
@@ -278,9 +277,9 @@ the default on_hit_object behavior is to disappear.
   optionally, explosion parameters can be specified in the projectile definition:
   ```lua
   parameters = {
-      boom = {
-          -- see https://github.com/minetest/minetest_game/blob/43185f19e386af3b7a0831fc8e7417d0e54544e7/game_api.txt#L546-L547
-      },
+	  boom = {
+		  -- see https://github.com/minetest/minetest_game/blob/43185f19e386af3b7a0831fc8e7417d0e54544e7/game_api.txt#L546-L547
+	  },
   }
   ```
 
@@ -291,11 +290,11 @@ the default on_hit_object behavior is to disappear.
   this requires additional parameters specified in the projectile definition:
   ```lua
   parameters = {
-      replace = {
-          target = nil,  -- what to replace. defaults to "air". multiple nodes and groups are planned for a future release.
-          replacement = "mymod:mynode" or {name = "mymod:mynode", param2 = 0},  -- what to replace it with. required.
-          radius = nil,  -- how many additional nodes around the center to replace. defaults to 0 (just the center).
-      },
+	  replace = {
+		  target = nil,  -- what to replace. defaults to "air". multiple nodes and groups are planned for a future release.
+		  replacement = "mymod:mynode" or {name = "mymod:mynode", param2 = 0},  -- what to replace it with. required.
+		  radius = nil,  -- how many additional nodes around the center to replace. defaults to 0 (just the center).
+	  },
   }
   ```
 
@@ -308,15 +307,28 @@ the default on_hit_object behavior is to disappear.
   play a sound when you hit an object. a SimpleSoundSpec must be provided, a sound parameters table is optional:
   ```lua
   parameters = {
-      hit_sound = {
-          spec = {
-              -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
-              name = "soundname",
-          },
-          parameters = {
-              -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
-          },
-      }
+	  hit_sound = {
+		  spec = {
+			  -- see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#simplesoundspec
+			  name = "soundname",
+		  },
+		  parameters = {
+			  -- optional, see https://github.com/minetest/minetest/blob/master/doc/lua_api.md#sound-parameter-table
+		  },
+	  }
+  }
+  ```
+
+* `on_hit_object = ballistics.on_hit_object_add_item`
+
+  when the projectile hits an object, the projectile is removed and an item is dropped in its place. requires additional
+  parameters specified in the projectile definition:
+  ```lua
+  parameters = {
+	  add_item = {
+		  item = "mymod:itemname",
+		  chance = nil,  -- 1 in `chance` chance that the item will drop. defaults to 1.
+	  },
   }
   ```
 
@@ -332,31 +344,44 @@ the default on_hit_object behavior is to disappear.
   scales are specified in parameters, e.g.
   ```lua
   parameters = {
-      add_velocity = {
-          scale = "constant",
-          offset = 10,
-      },
-      -- alternatively,
-      add_velocity = {
-          scale = "linear",
-          input = "damage",
-          scale = 3,
-          offset = 1,
-      },
+	  add_velocity = {
+		  scale = "constant",
+		  offset = 10,
+	  },
+	  -- alternatively,
+	  add_velocity = {
+		  scale = "linear",
+		  input = "damage",
+		  scale = 3,
+		  offset = 1,
+	  },
 
   }
   ```
 
-* `on_punch = ballistics.on_punch_drop_item`
+* `on_punch = ballistics.on_punch_add_item`
 
   when the projectile is punched, it is removed and an item is dropped in its place. this behavior only triggers if
   the projectile is not moving. requires additional parameters specified in the projectile definition:
   ```lua
   parameters = {
-      replace = {
-          item = "mymod:itemname",
-          chance = nil,  -- 1 in `chance` chance that the item will drop. defaults to 1.
-      },
+	  add_item = {
+		  item = "mymod:itemname",
+		  chance = nil,  -- 1 in `chance` chance that the item will drop. defaults to 1.
+	  },
+  }
+  ```
+
+* `on_punch = ballistics.on_punch_pickup_item`
+
+  when the projectile is punched, it is removed and an item is added to the puncher's inventory. this behavior only
+  triggers if the projectile is not moving. requires additional parameters specified in the projectile definition:
+  ```lua
+  parameters = {
+	  pickup_item = {
+		  item = "mymod:itemname",
+		  chance = nil,  -- 1 in `chance` chance that the item will drop. defaults to 1.
+	  },
   }
   ```
 
@@ -367,12 +392,12 @@ the default on_hit_object behavior is to disappear.
   show particles on step. must provide additional parameters in the projectile definition:
   ```lua
   parameters = {
-      particles = {
-          -- mostly, a ParticleSpawner definition
-          -- see https://github.com/minetest/minetest/blob/32e492837cbf286aeb91b4b63ecf3c890c71a1bc/doc/lua_api.md?plain=1#L10161-L10254
-          -- do *NOT* specify minpos and maxpos; instead, you can specify _delta_minpos and _delta_maxpos, which
-          -- will be added to the projectile's position
-      },
+	  particles = {
+		  -- mostly, a ParticleSpawner definition
+		  -- see https://github.com/minetest/minetest/blob/32e492837cbf286aeb91b4b63ecf3c890c71a1bc/doc/lua_api.md?plain=1#L10161-L10254
+		  -- do *NOT* specify minpos and maxpos; instead, you can specify _delta_minpos and _delta_maxpos, which
+		  -- will be added to the projectile's position
+	  },
   }
   ```
 
@@ -382,8 +407,8 @@ the default on_hit_object behavior is to disappear.
   projectile was created. accepts optional parameters:
   ```lua
   parameters = {
-      seek_target = {
-          seek_speed
-      },
+	  seek_target = {
+		  seek_speed = .01,
+	  },
   }
   ```

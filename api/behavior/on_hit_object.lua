@@ -175,9 +175,9 @@ function ballistics.on_hit_object_hit_sound_play(self, object, intersection_poin
 	minetest.sound_play(spec, parameters, true)
 end
 
-function ballistics.on_hit_object_drop_item(self, object, intersection_point, intersection_normal, box_id)
-	local pprops = self._parameters.drop_item
-	assert(pprops and pprops.item, "must specify parameters.drop_item.item in projectile definition")
+function ballistics.on_hit_object_add_item(self, object, intersection_point, intersection_normal, box_id)
+	local pprops = self._parameters.add_item
+	assert(pprops and pprops.item, "must specify parameters.add_item.item in projectile definition")
 	local item = pprops.item
 	local chance = pprops.chance or 1
 	local obj = self.object
