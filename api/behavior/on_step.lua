@@ -66,3 +66,12 @@ end
 function ballistics.on_step_apply_drag(self, dtime, moveresult)
 	ballistics.apply_drag(self)
 end
+
+function ballistics.on_step_check_time_to_live(self, dtime, moveresult)
+	local time_to_live =
+		assert(self._parameters.time_to_live, "must specify parameters.time_to_live in projectile definition")
+	if time_to_live > 0 and self._lifetime > time_to_live then
+		self.object:remove()
+		return true
+	end
+end
