@@ -22,12 +22,13 @@ minetest.register_on_mods_loaded(function()
 			if is_full_node(def) then
 				density[node_name] = math.huge
 			else
+				-- for things like stairs, where part of them is not there
 				density[node_name] = 0.1204
 			end
 		elseif def.liquidtype == "none" then
 			density[node_name] = 0.1204
 		else
-			density[node_name] = (def.move_resistance or def.liquid_viscosity or 1) * 10
+			density[node_name] = (def.move_resistance or def.liquid_viscosity or 1) + 1
 		end
 	end
 end)
